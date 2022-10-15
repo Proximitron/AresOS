@@ -368,7 +368,7 @@ function self:triggerViewMouseEvent(up, name, x, y, screenUid, ...)
         if status then
             return res
         else
-            system.print(name ..": error in triggerViewMouseEvent:",up,res)
+            system.print(name .." in triggerViewMouseEvent:",up,res)
             return nil
         end
     else
@@ -377,7 +377,7 @@ function self:triggerViewMouseEvent(up, name, x, y, screenUid, ...)
 end
 function self:registerDefaultScreen(screenName,viewName)
 	local keyName = "scval_"..screenName.."_"..viewName
-	if devMode then print("registering default view " .. keyName) end
+	print("registering default view " .. keyName)
 	config:set(keyName, 1, 0)
 end
 function self:register(env)
@@ -393,7 +393,7 @@ function self:register(env)
 		
 		local curr = config:get(keyName, 0)
 		if curr == 1 then
-			if devMode then print("register setActionHtml for " .. keyName) end
+			print("receiving one for " .. keyName)
 			--print("adding "..screenName.."Html")
 			register:addAction(screenName.."Html",totalViewName.."Html", function()
 				local mouseX = ((system.getMousePosX() / screenDefault.totalWidth) - screen.offsetx) / screen.width
@@ -468,9 +468,7 @@ function self:register(env)
 				end
 
 				-- In screen
-				if devMode then
-					print("Screen " .. screenName  .. " Type " .. screenType .. " Relative x " .. clickx .. " Relateive y " .. clicky)
-				end
+				system.print("Screen " .. screenName  .. " Type " .. screenType .. " Relative x " .. clickx .. " Relateive y " .. clicky)
 
 
 				return true
@@ -486,7 +484,7 @@ function self:register(env)
 	end
     function initAllScreens()
         screenObjCache = {} -- empty cache
-        if devMode then print("reinitialize all "..tableLength(screenDef).." screens") end
+        if devMode == true then print("reinitialize all "..tableLength(screenDef).." screens") end
 		
         for name, _ in pairs(screenDef) do
 			
@@ -635,7 +633,7 @@ function self:register(env)
 				print("setupMode off")
 			end
 		end,
-		"Activate/Deactivate screener setup mode"
+		"Aktiviert/Deaktiviert Setup-Modus"
 	)
 	
 end
