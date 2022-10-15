@@ -24,7 +24,7 @@ function self:register(env)
     local rollInput = 0
     local yawInput = 0
     local brakeInput = 0
-
+    if vec3(construct.getWorldVelocity()):len() < 10 then  brakeInput = 1 end
     register:addAction("systemOnUpdate", "NavUpdate",  function() Nav:update() end)
 
     register:addAction("forwardStart", "forwardStartFlight",  function() pitchInput =  -1 end)
