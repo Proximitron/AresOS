@@ -20,6 +20,7 @@ function inTable(tab, val)
 end
 if not inTable(player.getOrgIds(),2041) then system.print("Corp signatur required") error("Corp signatur required") unit.exit() end -- Corp requirement
 unit.hideWidget()
+-- test commit
 system.showScreen(1) ---Start Screen
 system.setScreen([[<svg xmlns="http://www.w3.org/2000/svg" width="40%" style="left:30%;top:10%;display:block; position:absolute;" viewBox="0 0 973.35 837.57">
     <defs>
