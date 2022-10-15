@@ -1,0 +1,17 @@
+/artificiaOS_dev.json
+/ground_construct_alpha3.conf
+/Gunner 2.2.conf
+/Gunner 3.0.conf
+/Remote_2.2.conf
+/sample.conf
+/Arch-ECU.conf
+/ArchHUD.conf
+/ArchHUDGFN.conf
+/archhud
+/archhud/*
+/AresOS/whispernet.lua
+/AresOS/optionals.lua
+/AresOS/dev.lua
+/AresOSmil
+/AresOSmil/*
+/.tmp*
