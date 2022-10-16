@@ -200,34 +200,36 @@ function drawAllScreensCss()
 
     if setupMode then
         css = css .. [[
-                                .screen { border: 2px solid hsl(]].. currHsl ..[[, 93.6%, 56.9%) }
-                                .menu { position: absolute; right: 0; top: 0; width: 100%; height: 3.125%; overflow: hidden; z-index: 1000 }
-                                .mItm { z-index:inherit; background-color:hsl(]].. currHsl ..[[, 100%, 50%);position: relative; float: right; height: 100%; width: calc(100% / 24); border: 2px solid hsl(]].. currHsl ..[[, 93.6%, 56.9%); overflow: hidden; color: white;display: flex;align-items: center;justify-content: center; }
-                            ]]
+							.screen { border: 2px solid hsl(]].. currHsl ..[[, 93.6%, 56.9%) }
+							.menu { position: absolute; right: 0; top: 0; width: 100%; height: 3.125%; overflow: hidden; z-index: 1000 }
+							.mItm { z-index:inherit; background-color:hsl(]].. currHsl ..[[, 100%, 50%);position: relative; float: right; height: 100%; width: calc(100% / 24); border: 2px solid hsl(]].. currHsl ..[[, 93.6%, 56.9%); overflow: hidden; color: white;display: flex;align-items: center;justify-content: center; }
+						]]
     end
 
+	local persp = self:getPerspective()
     for name, _ in pairs(screenDef) do
 		screen = screenObj(name)
-        css = css .. [[
-                                #]]..name..[[ { width: ]].. (screen.width * 100) ..[[%; height: ]].. (screen.height * 100) ..[[%; top: ]].. (screen.offsety * 100) ..[[%; left: ]].. (screen.offsetx * 100) ..[[% }
-                            ]]
-        if setupMode then
-            
-            css = css .. [[
-                                    #]]..name..[[ > .menu { height: ]].. (screen.menuitmheight * 100) ..[[% }
-                                    #]]..name..[[ > .menu .mItm { width: ]].. (screen.menuitmwidth * 100) ..[[% }
-                                ]]
-            for nr, viewName in pairs(self:getViewList(screen.tag)) do
-                local keyName = "scval_"..name.."_"..viewName
-                local curr = config:get(keyName, 0)
-                if curr == 1 then
-                    css = css .. [[
-                                            #]]..name..[[ > .menu .mItm.n]]..nr..[[ { background-color:hsl(]].. sqTwoRight ..[[, 100%, 50%) }
-                                        ]]
-                end
-            end
-
-        end
+		if persp == screen.perspective then
+			css = css .. [[
+								#]]..name..[[ { width: ]].. (screen.width * 100) ..[[%; height: ]].. (screen.height * 100) ..[[%; top: ]].. (screen.offsety * 100) ..[[%; left: ]].. (screen.offsetx * 100) ..[[% }
+			]]
+			if setupMode then
+				
+				css = css .. [[
+								#]]..name..[[ > .menu { height: ]].. (screen.menuitmheight * 100) ..[[% }
+								#]]..name..[[ > .menu .mItm { width: ]].. (screen.menuitmwidth * 100) ..[[% }
+				]]
+				for nr, viewName in pairs(self:getViewList(screen.tag)) do
+					local keyName = "scval_"..name.."_"..viewName
+					local curr = config:get(keyName, 0)
+					if curr == 1 then
+						css = css .. [[
+								#]]..name..[[ > .menu .mItm.n]]..nr..[[ { background-color:hsl(]].. sqTwoRight ..[[, 100%, 50%) }
+						]]
+					end
+				end
+			end
+		end
     end
     return css
 end
@@ -252,31 +254,29 @@ function drawAllScreens()
     if mode ~= lastMode then
         --showWidgets()
     end ]]--
-    local addCss, screenmenu = self:actionToHtml("staticCssStyle"), ""
-
-    if setupMode then
-        for nr, name in pairs(self:getViewList("screen")) do
-            screenmenu = screenmenu .. '<div class="mItm text n'.. nr ..'">'.. name .."</div>"
-        end
-    end
+    local addCss, menuRender, mouse = self:actionToHtml("staticCssStyle"), "", ""
 
 	local viewHudEntrys, innerScreens, mainScreens, screens = {}, {}, {}, {}
 	
 	local persp = self:getPerspective()
-	local menuRender = [[
-                                <div class="menu screentag">
-                                    ]]..screenmenu..[[
-                                </div>
-                            ]]
+	
+	if setupMode then	
+        for nr, name in pairs(self:getViewList("screen")) do
+            menuRender = menuRender .. '<div class="mItm text n'.. nr ..'">'.. name .."</div>"
+        end
+		menuRender = [[
+			<div class="menu screentag">
+				]]..menuRender..[[
+			</div>
+		]]
+    end
+
 	for name, _ in pairs(screenDef) do
 		screen = screenObj(name)
 		--print(screen.perspective)
 		if persp == screen.perspective then
 			if screen.tag == "screen" then
 				if innerScreens[screen.parent] == nil then innerScreens[screen.parent] = "" end
-				if setupMode then
-					
-				end
 				
 				innerScreens[screen.parent] = innerScreens[screen.parent] .. [[
                                    <div id="]].. name ..[[" class="screen">
@@ -286,11 +286,17 @@ function drawAllScreens()
 			end
 		end
 	end
-	menuRender = [[
-                                <div class="menu hudtag">
-                                    ]]..screenmenu..[[
-                                </div>
-                            ]]
+	if setupMode then
+		menuRender = ""
+        for nr, name in pairs(self:getViewList("hud")) do
+            menuRender = menuRender .. '<div class="mItm text n'.. nr ..'">'.. name .."</div>"
+        end
+		menuRender = [[
+			<div class="menu hudtag">
+				]]..menuRender..[[
+			</div>
+		]]
+    end
 	for name, _ in pairs(screenDef) do
 		screen = screenObj(name)
 		
@@ -310,6 +316,20 @@ function drawAllScreens()
 	end
 
 	local screenHtml = ""
+	if setupMode then
+		local mouseX = 	system.getMousePosX() / screenDefault.totalWidth
+        local mouseY = 	system.getMousePosY() / screenDefault.totalHeight
+
+        screenHtml = [[
+			<svg style="z-index: 10000;position: absolute;left:]]..(mouseX*100)..[[%;top:]]..(mouseY*100)..[[%" height="20px" width="20px" viewBox="0 0 512 512">
+				<path class="sfill" d="M434.214,344.448L92.881,3.115c-3.051-3.051-7.616-3.947-11.627-2.304c-3.989,1.643-6.592,5.547-6.592,9.856v490.667
+					c0,4.459,2.773,8.448,6.976,10.005c1.195,0.448,2.453,0.661,3.691,0.661c3.051,0,6.037-1.323,8.085-3.733l124.821-145.6h208.427
+					c4.309,0,8.213-2.603,9.856-6.592C438.182,352.085,437.265,347.52,434.214,344.448z"/>
+			</svg>
+			]]
+	end
+	
+	
 	for name, html in pairs(mainScreens) do
 		screenHtml = screenHtml .. html
 	end
@@ -354,10 +374,10 @@ function drawAllScreens()
 end
 
 function self:triggerViewMouseEvent(up, name, x, y, screenUid, ...)
-    if self.viewRegister[name] == nil then
+    if viewRegister[name] == nil then
         system.print("Render of view '" .. (name or "???") .. "' failed, because it there is no such view registered!","")
     end
-    local viewObj = self.viewRegister[name]
+    local viewObj = viewRegister[name]
 	local event = viewObj.onMouseUp
 	if up == false then
 		event = viewObj.onMouseDown
@@ -440,20 +460,22 @@ function self:register(env)
 			if clicky >= 0 and clicky < yvalheight then
 				-- height of menu
 				if clicky < menuItemHeight then
-					for index, viewName in pairs(self:getViewList(screen.tag)) do
+					if up then
+						for index, viewName in pairs(self:getViewList(screen.tag)) do
 
-						local offset, preOffset = index*menuItemWidth,(index-1)*menuItemWidth
+							local offset, preOffset = index*menuItemWidth,(index-1)*menuItemWidth
 
-						if clickx > (xvalwidth - offset) and clickx <= (xvalwidth - preOffset) then
-							local totalViewName = screenName.."_"..viewName
-							local keyName = "scval_"..totalViewName
-							local curr = config:get(keyName, 0)
-							if curr == 1 then
-								config:set(keyName, 0, 0)
-							else
-								config:set(keyName, 1, 0)
+							if clickx > (xvalwidth - offset) and clickx <= (xvalwidth - preOffset) then
+								local totalViewName = screenName.."_"..viewName
+								local keyName = "scval_"..totalViewName
+								local curr = config:get(keyName, 0)
+								if curr == 1 then
+									config:set(keyName, 0, 0)
+								else
+									config:set(keyName, 1, 0)
+								end
+								setActionHtml(screenName,viewName)
 							end
-							setActionHtml(screenName,viewName)
 						end
 					end
 				else
@@ -466,12 +488,13 @@ function self:register(env)
 						end
 					end
 				end
-
-				-- In screen
+				
 				if devMode then
-					print("Screen " .. screenName  .. " Type " .. screenType .. " Relative x " .. clickx .. " Relateive y " .. clicky)
+					local event = "DOWN"
+					if up then event = "UP" end
+					-- In screen
+					print("Event "..event.."Screen " .. screenName  .. " Type " .. screenType .. " Relative x " .. clickx .. " Relative y " .. clicky)
 				end
-
 
 				return true
 			end
@@ -508,12 +531,16 @@ function self:register(env)
             )
             register:addAction("mouseUp","screenMouseUp"..name,
 				function(clickxbase, clickybase, screenType)
-                    virtualMouseEvent(true,screen,clickxbase, clickybase, screenType)
+					if self:getPerspective() == screen.perspective then
+						virtualMouseEvent(true,screen,clickxbase, clickybase, screenType)
+					end
 				end
             )
 			register:addAction("mouseDown","screenMouseDown"..name,
 				function(clickxbase, clickybase, screenType)
-                    virtualMouseEvent(true,screen,clickxbase, clickybase, screenType)
+					if self:getPerspective() == screen.perspective then
+						virtualMouseEvent(false,screen,clickxbase, clickybase, screenType)
+					end
 				end
             )
         end 
@@ -630,8 +657,10 @@ function self:register(env)
 		function(prompt)
 			setupMode = not setupMode
 			if setupMode then
+				system.lockView(true)
 				print("setupMode on")
 			else
+				system.lockView(false)
 				print("setupMode off")
 			end
 		end,
