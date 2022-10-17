@@ -31,8 +31,8 @@ local screenDefault = {
     width=1 * (1/3),
     height=1 * (1/3),
     tag = "screen",
-    totalWidth = 1920,
-    totalHeight = 1080,
+    totalWidth = system.getScreenHeight(), -- 1920,
+    totalHeight = system.getScreenWidth(), --1080,
 	perspective = "third",
 	parent = "mainScreenThird"
 }
@@ -67,10 +67,15 @@ function self:addScreen(screenName,screenData)
 	screenDef[screenName] = curr;
 end
 function self:getPerspectiveList()
-	return {"third"}
+	return {"first","third"}
 end
 function self:getPerspective()
-	return "third"
+	local persp = system.getCameraMode()
+	if persp == 1 then
+		return "first"
+	else
+		return "third"
+	end
 end
 
 local viewRegister = {}
