@@ -14,7 +14,7 @@ Läd/organisiert eine beliebige Menge an Funktionen/Plugins, welche dann auf all
 * Grundlegend ist ein Plugin eine Lua-Datei, dessen Namen auch der Name des Plugins ist, beispielsweise
 ```superplugin.lua```. Mischung aus Groß-/Kleinschreibung ist erlaubt, muss aber dann überall eingehalten werden.
 
-## Vorteile von Artificia OS
+## Vorteile
 * Einfache Erweiterung/Erstellung von Plugins
 * Modulare, stabile Basis zum gleichzeitigen Einsatz beliebig vieler Entwicklungen im selben Lua element
 * Abfangen und Anzeigen von Fehlermeldungen, auch  eingebundenen Dateien ohne Abstürze hervorzurufen
