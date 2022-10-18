@@ -43,13 +43,6 @@ des Plugins ausgeführt."
 * Jedes Plugin wird in einem eigenen, sicheren Container ausgeführt. Im Falle von Fehlermeldungen werden diese in der
 Lua-Console angezeigt, alle anderen Plugins aber weiter ausgeführt.
 
-### Schalter
-Plugins die vom Benutzer ein- und/oder ausgeschalten werden können, können sich für diese Funktion (meist in
-```register(env)```) registrieren.
-```register:addSwitch("SuperSwitch", {activate=turnOnFunktion,deactivate=turnOffFunktion,isActive=isActiveFunktion})```
-Im einfachsten Fall enthält die eigene Klasse die Funktionen ```activate```, ```deactivate``` und ```isActive```. Dann
-reicht die Signatur ```register:addSwitch("SuperSwitch", superplugin)```
-
 ### Visuelle Screen Elemente
 Sollen Elemente im Hud, auf virtuellen Monitoren (im Hud) oder auf echten Monitoren (Spielelemente) angezeigt werden,
 wird meistens das Plugin ```screener``` zur Darstellung genutzt. Das Plugin ruft jeden Frame alle view mit dem
@@ -102,9 +95,19 @@ angefügt werden.
 Erstellung von Autoconfigs wird in Zukunft wieder problemlos, in der aktuellen version allerdings nicht
 empfehlenswert. Switch ist ```--output yaml```
 
-## Standard Plugins
-* register:
-* slots:
-* CommandHandler:
-* Settings:
-* screener:
+### Schalter
+Plugins die vom Benutzer ein- und/oder ausgeschalten werden können, können sich für diese Funktion (meist in
+```register(env)```) registrieren.
+```register:addSwitch("SuperSwitch", {activate=turnOnFunktion,deactivate=turnOffFunktion,isActive=isActiveFunktion})```
+Im einfachsten Fall enthält die eigene Klasse die Funktionen ```activate```, ```deactivate``` und ```isActive```. Dann
+reicht die Signatur ```register:addSwitch("SuperSwitch", superplugin)```
+
+## Oft genutzte Standard Plugins
+* register: Zentrale Aktionsregistrierung
+* slots: Kategorisiert angeschlossene Geräte und weist sie Listen und standartisierten Namen zu. Beispiel: liste "atmosfueltank", slots globals "antigrav", "database" und "warpdrive"
+* config: Performantes, simples schreiben von Konfigurations-Optionen. Für Konfigurationen dem direkten schreiben in die Datenbank vorzuziehen.
+* Settings: Erweitert ```config``` für komplexe Konfigurationen. Erlaubt Gruppierung, Typisierung und Werte-Bereiche
+* screener: Registrierung für visuelle Elemente (HUD und reale sowie virtuelle Bildschirme).
+* CommandHandler: Registrieren und Ausführen von Befehlen im LUA-Fenster. Beliebige Funktion und Beschreibung wird hinterlegt und auch beim Aufruf von "/help" aufgelistet
+* BaseFlight: Standard Flugprogramm (ähnliche NQs Basis-Flugscript)
+
