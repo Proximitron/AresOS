@@ -12,6 +12,8 @@
 /AresOS/whispernet.lua
 /AresOS/optionals.lua
 /AresOS/dev.lua
+/SkelettiAresOs
+/SkelettiAresOs/*
 /AresOSmil
 /AresOSmil/*
 /.tmp*
