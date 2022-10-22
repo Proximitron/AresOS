@@ -89,6 +89,21 @@ local function getArgsForFilter (filterSignature)
 		
     end
 end
+function self:getClassType(class)
+	local type
+	if slotClasses[class] ~= nil then
+		type = slotClasses[class]
+	else
+		local c = string.sub(class,0,5)
+		if slotSubClass[c] ~= nil then
+			type = slotSubClass[c]
+		end
+	end
+	--if type == nil then
+		--system.print("Unrecognized Type: "..class)
+	--end
+	return type
+end
 function self:register(env)
     _ENV = env
 
@@ -97,15 +112,7 @@ function self:register(env)
     end
     for _, slotElement in pairs(self:getSlots()) do
         local class = slotElement.getClass()
-		local type = nil;
-        if slotClasses[class] ~= nil then
-            type = slotClasses[class]
-        else
-			local c = string.sub(class,0,5)
-			if slotSubClass[c] ~= nil then
-				type = slotSubClass[c]
-			end
-        end
+		local type = self:getClassType(class)
 		
 		if type == nil then
 			system.print("Unrecognized Type: "..class)

@@ -58,6 +58,8 @@ function self:register(env)
     register:addAction("downStop", "downStopFlight", function() Nav.axisCommandManager:updateCommandFromActionStop(axisCommandId.vertical, 1.0) end)
     register:addAction("brakeStop", "brakeStopFlight", function() brakeInput = 0 end)
     local function NormalFlight()
+		local s = system
+		local ct = construct
         local pitchSpeedFactor = 1.6
         local yawSpeedFactor =  2
         local rollSpeedFactor = 3
@@ -67,24 +69,24 @@ function self:register(env)
         self.brake = brakeInput
 
         -- final inputs
-        local finalPitchInput = pitchInput + system.getControlDeviceForwardInput()
-        local finalRollInput = rollInput + system.getControlDeviceYawInput()
-        local finalYawInput = yawInput - system.getControlDeviceLeftRightInput()
+        local finalPitchInput = pitchInput + s.getControlDeviceForwardInput()
+        local finalRollInput = rollInput + s.getControlDeviceYawInput()
+        local finalYawInput = yawInput - s.getControlDeviceLeftRightInput()
         local finalBrakeInput = brakeInput
 
         -- Axis
         local worldVertical = vec3(core.getWorldVertical()) -- along gravity
-        local constructUp = vec3(construct.getWorldOrientationUp())
-        local constructForward = vec3(construct.getWorldOrientationForward())
-        local constructRight = vec3(construct.getWorldOrientationRight())
-        local constructVelocity = vec3(construct.getWorldVelocity())
-        local constructVelocityDir = vec3(construct.getWorldVelocity()):normalize()
+        local constructUp = vec3(ct.getWorldOrientationUp())
+        local constructForward = vec3(ct.getWorldOrientationForward())
+        local constructRight = vec3(ct.getWorldOrientationRight())
+        local constructVelocity = vec3(ct.getWorldVelocity())
+        local constructVelocityDir = vec3(ct.getWorldVelocity()):normalize()
         local currentRollDeg = getRoll(worldVertical, constructForward, constructRight)
         local currentRollDegAbs = math.abs(currentRollDeg)
         local currentRollDegSign = utils.sign(currentRollDeg)
 
         -- Rotation
-        local constructAngularVelocity = vec3(construct.getWorldAngularVelocity())
+        local constructAngularVelocity = vec3(ct.getWorldAngularVelocity())
         local targetAngularVelocity = finalPitchInput * pitchSpeedFactor * constructRight
                                         + finalRollInput * rollSpeedFactor * constructForward
                                         + finalYawInput * yawSpeedFactor * constructUp
@@ -96,7 +98,7 @@ function self:register(env)
 
         -- Rotation
         local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
-        local airAcceleration = vec3(construct.getWorldAirFrictionAngularAcceleration())
+        local airAcceleration = vec3(ct.getWorldAirFrictionAngularAcceleration())
         angularAcceleration = angularAcceleration - airAcceleration -- Try to compensate air friction
         Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '', tolerancePercentToSkipOtherPriorities)
 
@@ -180,11 +182,12 @@ function self:getMass()
 end
 function self:getBrakeTime()
     local c = 75000 / 3.6
-    local spaceBrakeForce = construct.getMaxBrake()
+	local ct = construct
+    local spaceBrakeForce = ct.getMaxBrake()
     if spaceBrakeForce == nil then return 0,0 end
-	local speed = vec3(construct.getWorldVelocity()):len()
+	local speed = vec3(ct.getWorldVelocity()):len()
 	if speed < 1 then return 0,0 end
-    local v = math.min(speed, maxSpeed)
+    local v = math.min(speed, ct.getMaxSpeed())
     local m = self:getMass()
     local brakeTime = m * c / spaceBrakeForce * math.asin(v / c)
     local brakeDistance = m * c ^ 2 / spaceBrakeForce * (1 - math.sqrt(1 - v ^ 2 / c ^ 2)) -- meter

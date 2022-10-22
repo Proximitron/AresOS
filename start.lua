@@ -35,15 +35,35 @@ system.setScreen([[<svg xmlns="http://www.w3.org/2000/svg" width="40%" style="le
     <text x="40%" y="88%" style="fill:#FFFFFF;font-size:50px">Hyperion Scripting</text>
     </svg>]])
 
+--local realRequire = require
+--require = function(name) return print("require '" .. name.. "': deprecated, use getPlugin()") end 
 local plugins = {}
 local pluginCache = {}
+function plugins:fixName(name)
+    if string.find(name, packagePrefix) then
+        name = string.gsub(name, packagePrefix, "")
+    end
+	return name
+end
+function plugins:unloadPlugin(name)
+	assert(type(name) == "string", "getPlugin: parameter name has to be string, was " .. type(name))
+	name = plugins:fixName(name)
+	if package.loaded ~= nil and package.loaded[packagePrefix..name] ~= nil then
+		package.loaded[packagePrefix..name] = nil
+	end
+	if pluginCache[name] ~= nil then
+		if type(pluginCache[name]) == "table" and type(pluginCache[name].unregister) == "function" then
+			pluginCache[name].unregister()
+		end
+		pluginCache[name] = nil
+	end
+end
 -- optional key, will checked on function "valid" before returning plugin if it exist, otherwise defaults to return plugin
 function plugins:getPlugin(name,noError,key)
     assert(type(name) == "string", "getPlugin: parameter name has to be string, was " .. type(name))
     if noError == nil then noError = false end
-    if string.find(name, packagePrefix) then
-        name = string.gsub(name, packagePrefix, "")
-    end
+	name = plugins:fixName(name)
+	
     if not plugins:hasPlugin(name,noError) then return nil end
 
     if type(pluginCache[name]) == "table" and pluginCache[name].valid ~= nil then
@@ -58,9 +78,8 @@ end
 function plugins:hasPlugin(name,noError)
     assert(type(name) == "string", "hasPlugin: parameter name has to be string, was " .. type(name))
     if noError == nil then noError = false end
-    if string.find(name, packagePrefix) then
-        name = string.gsub(name, packagePrefix, "")
-    end
+    name = plugins:fixName(name)
+	
     if pluginCache[name] == nil then
 		pluginCache[name] = false
 
@@ -76,7 +95,6 @@ function plugins:hasPlugin(name,noError)
 				pluginCache[name] = res
 			end
 		end
-		
 
         if type(pluginCache[name]) == "table" then
             if pluginCache[name].register ~= nil then
@@ -105,6 +123,7 @@ function plugins:hasPlugin(name,noError)
     end
     return type(pluginCache[name]) == "table"
 end
+function unloadPlugin(name) return plugins:unloadPlugin(name) end
 function hasPlugin(name,noError) return plugins:hasPlugin(name,noError) end
 function getPlugin(name,noError,key) return plugins:getPlugin(name,noError,key) end
 local errorStack = {}
@@ -133,6 +152,7 @@ modeColors[1] = mode2Color
 
 fuelTankHandlingSpace = 3 --export:
 fuelTankHandlingRocket = 0 --export:
+fuelTankHandlingAtmos = 0 --export:
 ContainerOptimization = 4 --export:
 FuelTankOptimization = 4 --export:
 
@@ -229,6 +249,7 @@ register:addAction("unitOnTimer", "Timer", onTimer)
 
 if devMode == true then
 	getPlugin("dev", true)
+	getPlugin("devTools", true)
 end
 getPlugin("optionals", true)
 

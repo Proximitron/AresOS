@@ -1,6 +1,4 @@
 self = {}
-json = require("dkjson")
-require("cpml/utils")
 local config = getPlugin("config")
 
 self.version = 0.9

@@ -1,7 +1,7 @@
 -- Hud is generating a flight hud (general purpose)
 local self = {}
 local staticRenderList = {}
-local mode = 0
+local mode = 1
 local Flight = nil
 local Horizon = nil
 function renderHudGeneralCss()
@@ -18,7 +18,10 @@ function renderHudGeneralCss()
     if sqTwoRight > 360 then
         sqTwoRight = sqTwoRight - 360
     end
-
+	local warnColor = 5
+	if currHsl < 45 or currHsl > 315 then
+		warnColor = sqTwoRight
+	end
     return [[
                             .lfill { fill:hsl(]].. currHsl ..[[, 93.6%, 56.9%)}
                             .sfill { fill:hsl(]].. currHsl ..[[, 100%, 50%) }
@@ -26,7 +29,7 @@ function renderHudGeneralCss()
                             .majorLine, .minorLine {stroke:hsl(]].. currHsl ..[[, 100%, 50%);opacity:0.8;stroke-width:3;fill-opacity:0;}
                             .minorLine {opacity:0.4}
                             .text {fill:hsl(]].. currHsl ..[[, 100%, 50%);font-weight:bold}
-                            
+                            .warn { fill:hsl(]].. warnColor ..[[, 100%, 50%) !important;font-weight:bold }
                             .sstroke { stroke:hsl(]].. currHsl ..[[, 100%, 50%) }
                             
                             .pitch, .alt { stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%) }
@@ -42,7 +45,7 @@ function renderHudGeneralCss()
                             .sroll {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);text-anchor:middle;font-weight:bold}
                             
                             .throttle {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);opacity:0.7}
-                            .textWeak text {fill-opacity:0.5}
+                            .textWeak, .textWeak text {fill-opacity:0.5}
                             
                             .atext {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);font-weight:bold}
                             .txtPoly, .txtPolyN { opacity:0.5;stroke-width:2;stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%);fill:none;stroke-linejoin:miter }
@@ -136,12 +139,13 @@ function self:setScreen(screen)
     if speed > 5 then
         relativePitch = getRelativePitch(velocity)
         relativeYaw = getRelativeYaw(velocity)
-        invertPitchYaw = false --export: Inverts pitch and yaw values for ships that had its core turned 180°
+        --[[invertPitchYaw = false --export: Inverts pitch and yaw values for ships that had its core turned 180°
         if invertPitchYaw then
             relativePitch = relativePitch + 180
             relativeYaw = relativeYaw + 180
-        end
+        end]]--
     end
+		
     --if true then return "" end
     if (mode == 1) then
         pitch = relativePitch
@@ -177,26 +181,44 @@ function self:setScreen(screen)
     content = content.. [[
                                     <text x="1135" y="395" text-anchor="end">]]..speedOrBreak..[[</text>
                         ]]
-
-    local trottle = 0
+	
+	local blinkFuelRange = 20
+	local fuelTxtHtml, fuelValHtml = "", ""
+	local fuelOffset = 660
+	for _,fuelName in pairs({"atmo","space","rocket"}) do
+		if hasFuel(fuelName) then
+			fuelTxtHtml = fuelTxtHtml .. [[<text x="785" y="]]..fuelOffset..[[" text-anchor="start">]]..string.upper(fuelName)..[[</text>]]
+			local fuelClass = ""
+			local currFuel = minFuelStateByName(fuelName)
+			if currFuel < blinkFuelRange then fuelClass = [[class="warn"]] else fuelClass = [[class="textWeak"]] end
+			fuelValHtml = fuelValHtml .. [[<text x="785" y="]]..(fuelOffset+14)..[[" ]]..fuelClass..[[ text-anchor="start">]]..currFuel..[[%</text>]]
+			fuelOffset = fuelOffset + 25
+		end
+	end
+	
+	local trottle = 0
     if unit.getThrottle then trottle = unit.getThrottle() end
+	
     content = content.. [[
                             <text x="785" y="520" text-anchor="start">PITCH</text>
                             <text x="1135" y="520" text-anchor="end">]]..altOrSpeedTxt..[[</text>
-                            <text x="960" y="678" text-anchor="middle">]]..rollOrYaw..[[</text>
+                            <text x="960" y="676" text-anchor="middle">]]..rollOrYaw..[[</text>
                             <text x="790" y="660" text-anchor="start"></text>
 							<text x="1135" y="660" text-anchor="end">THRL</text>
+							]]..fuelTxtHtml..[[
                         </g>
                         <g font-size="12">
                             <text x="785" y="534" text-anchor="start">]].. utils.round(pitch)..[[</text>
                             <text x="1135" y="534" text-anchor="end">]].. utils.round(altOrSpeedVal)..[[</text>
                             <text x="960" y="690" text-anchor="middle">]]..utils.round(roll)..[[</text>
-                            <text x="790" y="672" text-anchor="start">]]..""..[[</text>
-							<text x="1135" y="672" text-anchor="end">]]..utils.round(trottle)..[[%</text>
+                            <text x="790" y="674" text-anchor="start">]]..""..[[</text>
+							<text x="1135" y="674" text-anchor="end">]]..utils.round(trottle)..[[%</text>
+							]]..fuelValHtml..[[
                         ]]
 
     content = content.. [[
                                     <text x="1135" y="409" text-anchor="end">]]..speedAsKmh..[[</text>
+									<text x="785" y="409" text-anchor="end">]]..speedAsKmh..[[</text>
                         ]]
 
     content = content.. [[
@@ -319,8 +341,132 @@ function self:setScreen(screen)
 
     return content
 end
+
+local tanks = nil
+function hasFuel(name)
+	if tanks == nil then tanks = getTanks() end
+	return #tanks[name] > 0
+end
+function minFuelStateByName(name)
+	if tanks == nil then tanks = getTanks() end
+	return minFuelState(tanks[name])
+end
+function minFuelState(tanks)
+	local minfuel = 10000
+    for k,v in pairs(tanks) do
+        local fl = CalculateFuelLevel(v)*100
+        if fl < minfuel then minfuel = fl end
+    end
+	if minfuel == 10000 then return 0 end
+    return round(minfuel)
+end
+local tankDefinitions = {
+	atmofueltank={
+		{w=10000,mv=51200,me=5480}, -- volume in kg of L
+		{w=1300,mv=6400,me=988.67}, -- volume in kg of M
+		{w=150,mv=1600,me=182.67},  -- volume in kg of S
+		{w=0,mv=400,me=35.03}		-- volume in kg of XS
+	},
+	spacefueltank={
+		{w=10000,mv=76800,me=5480}, -- volume in kg of L
+		{w=1300,mv=9600,me=988.67}, -- volume in kg of M
+		{w=150,mv=2400,me=182.67},  -- volume in kg of S
+		{w=0,mv=2400,me=182.67}		-- volume in kg of XS
+	},
+	rocketfueltank={
+		{w=65000,mv=50000 * 0.8,me=25740},	-- volume in kg of L
+		{w=1300,mv=6400 * 0.8,me=4720}, 	-- volume in kg of M
+		{w=150,mv=800 * 0.8,me=886.72},		-- volume in kg of S
+		{w=0,mv=400 * 0.8,me=173.42}		-- volume in kg of XS
+	}
+}
+function tankStatsDefault(typeName, hp)
+	for _,stats in pairs(tankDefinitions[typeName]) do
+		if hp > stats.w then
+			return stats.mv,stats.me
+		end
+	end
+	return 0,0
+end
+function tankStats(id,listName,MaxVolume,massEmpty)
+	local hasLink = false
+	
+	for _,tank in pairs(_ENV[listName]) do
+		if tank.getLocalId() == id then
+			hasLink = true
+			MaxVolume = tank.getMaxVolume() * 4
+			massEmpty = tank.getSelfMass()
+			break
+		end
+	end
+	return hasLink,MaxVolume,massEmpty
+end
+function CalculateFuelLevel(id)
+    return (core.getElementMassById(id[1]) - id["me"]) / id["mv"]
+end
+function getTanks()
+	local atmos, space, rocket  = {}, {}, {}
+    local ids = core.getElementIdList()
+	fuelTankHandlingAtmos = fuelTankHandlingAtmos or 0
+	fuelTankHandlingSpace = fuelTankHandlingSpace or 0
+	fuelTankHandlingRocket = fuelTankHandlingRocket or 0
+	
+	ContainerOptimization = ContainerOptimization or 0
+	FuelTankOptimization = FuelTankOptimization or 0	
+    local function CalcMaxVol(mv)
+        local f1, f2 = 0, 0
+
+        if ContainerOptimization > 0 then 
+            f1 = ContainerOptimization * 0.05
+        end
+        if FuelTankOptimization > 0 then 
+            f2 = FuelTankOptimization * 0.05
+        end
+        return mv * (1 - (f1 + f2))        
+    end
+	local tanks = {atmo = {},space ={} ,rocket = {}}
+	local slots = getPlugin("slots")
+	for _,id in pairs(ids) do
+		local type = core.getElementClassById(id)
+		local typeTranslate = slots:getClassType(type)
+		if typeTranslate ~= nil then
+			if typeTranslate == "atmofueltank" or typeTranslate == "spacefueltank" or typeTranslate == "rocketfueltank" then
+				local hp = core.getElementMaxHitPointsById(id)
+				local handling = 0
+				if typeTranslate == "atmofueltank" then
+					handling = fuelTankHandlingAtmos
+				elseif typeTranslate == "spacefueltank" then
+					handling = fuelTankHandlingSpace
+				elseif typeTranslate == "rocketfueltank" then
+					handling = fuelTankHandlingRocket
+				end
+				local MaxVolume, massEmpty = tankStatsDefault(typeTranslate,hp,handling)
+				local hasLink = false
+				hasLink,MaxVolume,massEmpty = tankStats(id,typeTranslate,MaxVolume,massEmpty)
+				if not hasLink then
+					MaxVolume = MaxVolume + (MaxVolume * (handling * 0.2))
+					MaxVolume = CalcMaxVol(MaxVolume)
+				end
+				
+				local list = {[1] = id,["mv"] = MaxVolume,["me"] = massEmpty}
+				if typeTranslate == "atmofueltank" then
+					table.insert(tanks.atmo, list)
+				elseif typeTranslate == "spacefueltank" then
+					table.insert(tanks.space, list)
+				elseif typeTranslate == "rocketfueltank" then
+					table.insert(tanks.rocket, list)
+				end
+			end
+		end
+	end
+	for _,typelist in pairs(tanks) do
+		table.sort(typelist, function(a,b) return a[1] < b[1] end)
+	end
+	
+    return tanks              
+end
 function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
-    local su = distance > 100000
+    local su = distance > 10000
     if places == nil then places = 1 end
     if su then
           -- Convert to SU
@@ -339,8 +485,7 @@ function self:register(env)
 	Horizon = getPlugin("artificialhorizon",true)
 	local screener = getPlugin("screener")
 	screener:registerDefaultScreen("mainScreenThird","Hud")
+	screener:registerDefaultScreen("mainScreenFirst","Hud")
 	screener:addView("Hud",self)
-	
-	
 end
 return self
