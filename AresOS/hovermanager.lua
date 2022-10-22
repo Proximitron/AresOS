@@ -23,7 +23,7 @@ function self:register(env)
                 if speed > 14 then -- about 50 km/h
                     lastHighSet = system.getArkTime()
                     newAlt = groundAltitudeMax
-                elseif unit.getThrottle and unit.getThrottle() < 1 and (system.getArkTime() - lastHighSet) > 4 then
+                elseif unit.getThrottle and unit.getThrottle() < 1 and (system.getArkTime() - lastHighSet) > 6 then
                     newAlt = 2
                 end
 

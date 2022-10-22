@@ -33,6 +33,12 @@ function self:setScreen(screen)
     local relativePitch = 0
     local relativeYaw = 0
 
+	if unit.getClosestPlanetInfluence() > 0 or (altitude > 0 and  altitude < 100000) then
+		mode = 0
+	else
+		mode = 1
+	end
+	
     if speed > 5 then
         relativePitch = getRelativePitch(velocity)
         relativeYaw = getRelativeYaw(velocity)

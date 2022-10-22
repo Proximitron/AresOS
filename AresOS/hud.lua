@@ -1,7 +1,7 @@
 -- Hud is generating a flight hud (general purpose)
 local self = {}
 local staticRenderList = {}
-local mode = 1
+local mode = 0
 local Flight = nil
 local Horizon = nil
 function renderHudGeneralCss()
@@ -147,7 +147,15 @@ function self:setScreen(screen)
     end
 		
     --if true then return "" end
-    if (mode == 1) then
+	
+	if unit.getClosestPlanetInfluence() > 0 or (altitude > 0 and  altitude < 100000) then
+		mode = 0
+	else
+		mode = 1
+	end
+	
+	
+    if mode == 1 then
         pitch = relativePitch
         roll = relativeYaw
 
@@ -186,10 +194,10 @@ function self:setScreen(screen)
 	local fuelTxtHtml, fuelValHtml = "", ""
 	local fuelOffset = 660
 	for _,fuelName in pairs({"atmo","space","rocket"}) do
-		if hasFuel(fuelName) then
+		if self:hasFuel(fuelName) then
 			fuelTxtHtml = fuelTxtHtml .. [[<text x="785" y="]]..fuelOffset..[[" text-anchor="start">]]..string.upper(fuelName)..[[</text>]]
 			local fuelClass = ""
-			local currFuel = minFuelStateByName(fuelName)
+			local currFuel = self:minFuelState(fuelName)
 			if currFuel < blinkFuelRange then fuelClass = [[class="warn"]] else fuelClass = [[class="textWeak"]] end
 			fuelValHtml = fuelValHtml .. [[<text x="785" y="]]..(fuelOffset+14)..[[" ]]..fuelClass..[[ text-anchor="start">]]..currFuel..[[%</text>]]
 			fuelOffset = fuelOffset + 25
@@ -218,9 +226,8 @@ function self:setScreen(screen)
 
     content = content.. [[
                                     <text x="1135" y="409" text-anchor="end">]]..speedAsKmh..[[</text>
-									<text x="785" y="409" text-anchor="end">]]..speedAsKmh..[[</text>
                         ]]
-
+--									<text x="785" y="409" text-anchor="start">]]..speedAsKmh..[[</text>
     content = content.. [[
                                     </g>                            
                                 </g>
@@ -343,15 +350,15 @@ function self:setScreen(screen)
 end
 
 local tanks = nil
-function hasFuel(name)
+function self:hasFuel(name)
 	if tanks == nil then tanks = getTanks() end
 	return #tanks[name] > 0
 end
-function minFuelStateByName(name)
+function self:minFuelState(name)
 	if tanks == nil then tanks = getTanks() end
-	return minFuelState(tanks[name])
+	return minFuelStateByTank(tanks[name])
 end
-function minFuelState(tanks)
+function minFuelStateByTank(tanks)
 	local minfuel = 10000
     for k,v in pairs(tanks) do
         local fl = CalculateFuelLevel(v)*100
