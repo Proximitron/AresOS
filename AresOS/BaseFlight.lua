@@ -25,8 +25,9 @@ function self:register(env)
     local yawInput = 0
     local brakeInput = 0
 	local gearExtended = unit.isAnyLandingGearDeployed()
-	Nav.axisCommandManager:setTargetGroundAltitude(1)
+	
 	local axisCommandManager = Nav.axisCommandManager
+	axisCommandManager:setTargetGroundAltitude(30)
     --if vec3(construct.getWorldVelocity()):len() < 10 then brakeInput = 1 end
 
     register:addAction("systemOnUpdate", "NavUpdate",  function() Nav:update() end)
@@ -40,7 +41,13 @@ function self:register(env)
     register:addAction("leftStart", "leftStartFlight",  function() rollInput =  -1 end)
     register:addAction("rightStart", "rightStartFlight",  function() rollInput =  1 end)
     register:addAction("upStart", "upStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.vertical, 1.0) end)
-    register:addAction("downStart", "downStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.vertical, -1.0) end)  
+    register:addAction("downStart", "downStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.vertical, -1.0) end)
+	
+	register:addAction("groundaltitudedownLoop", "groundaltitudedownLoopFlight",  function() axisCommandManager:updateTargetGroundAltitudeFromActionLoop(-1.0) end)
+	register:addAction("groundaltitudedownStart", "groundaltitudedownStartFlight",  function() axisCommandManager:updateTargetGroundAltitudeFromActionStart(-1.0) end)
+	register:addAction("groundaltitudeupLoop", "groundaltitudeupLoopFlight",  function() axisCommandManager:updateTargetGroundAltitudeFromActionLoop(1.0) end)
+	register:addAction("groundaltitudeupStart", "groundaltitudeupStartFlight",  function() axisCommandManager:updateTargetGroundAltitudeFromActionStart(1.0) end)
+
     --register:addAction("gearStart", "gearStartFlight",  function() if brakeInput == 1 then brakeInput = 0 else brakeInput = 1 end end)
 	register:addAction("gearStart", "gearStartFlight",  function()
 		gearExtended = not gearExtended
