@@ -19,43 +19,56 @@ function self:register(env)
     if Nav.control.isRemoteControlled() == 1 then
         player.freeze(1)
     end
-
+	
     local pitchInput = 0
     local rollInput = 0
     local yawInput = 0
     local brakeInput = 0
-    if vec3(construct.getWorldVelocity()):len() < 10 then  brakeInput = 1 end
+	local gearExtended = unit.isAnyLandingGearDeployed()
+	Nav.axisCommandManager:setTargetGroundAltitude(1)
+	local axisCommandManager = Nav.axisCommandManager
+    --if vec3(construct.getWorldVelocity()):len() < 10 then brakeInput = 1 end
+
     register:addAction("systemOnUpdate", "NavUpdate",  function() Nav:update() end)
 
     register:addAction("forwardStart", "forwardStartFlight",  function() pitchInput =  -1 end)
     register:addAction("backwardStart", "backwardStartFlight",  function() pitchInput =  1 end)
     register:addAction("yawleftStart", "yawleftStartFlight",  function() yawInput =  1 end)
     register:addAction("yawrightStart", "yawrightStartFlight",  function() yawInput =  -1 end)
-    register:addAction("strafeleftStart", "strafeleftStartFlight",  function() Nav.axisCommandManager:updateCommandFromActionStart(axisCommandId.lateral, -1.0) end)
-    register:addAction("straferightStart", "straferightStartFlight",  function() Nav.axisCommandManager:updateCommandFromActionStart(axisCommandId.lateral, 1.0) end)
+    register:addAction("strafeleftStart", "strafeleftStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.lateral, -1.0) end)
+    register:addAction("straferightStart", "straferightStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.lateral, 1.0) end)
     register:addAction("leftStart", "leftStartFlight",  function() rollInput =  -1 end)
     register:addAction("rightStart", "rightStartFlight",  function() rollInput =  1 end)
-    register:addAction("upStart", "upStartFlight",  function() Nav.axisCommandManager:updateCommandFromActionStart(axisCommandId.vertical, 1.0) end)
-    register:addAction("downStart", "downStartFlight",  function() Nav.axisCommandManager:updateCommandFromActionStart(axisCommandId.vertical, -1.0) end)  
-    register:addAction("gearStart", "gearStartFlight",  function() if brakeInput == 1 then brakeInput = 0 else brakeInput = 1 end end)
-    register:addAction("brakeStart", "brakeStartFlight",  function() brakeInput = 1 end)
-    register:addAction("stopenginesStart", "stopenginesStartFlight",  function() Nav.axisCommandManager:resetCommand(axisCommandId.longitudinal) end)
-    register:addAction("speedupStart", "speedupStartFlight",  function() Nav.axisCommandManager:updateCommandFromActionStart(axisCommandId.longitudinal, 5.0) end)
-    register:addAction("speeddownStart", "speeddownStartFlight",  function() Nav.axisCommandManager:updateCommandFromActionStart(axisCommandId.longitudinal, -5.0) end)
+    register:addAction("upStart", "upStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.vertical, 1.0) end)
+    register:addAction("downStart", "downStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.vertical, -1.0) end)  
+    --register:addAction("gearStart", "gearStartFlight",  function() if brakeInput == 1 then brakeInput = 0 else brakeInput = 1 end end)
+	register:addAction("gearStart", "gearStartFlight",  function()
+		gearExtended = not gearExtended
+		if gearExtended then unit.deployLandingGears() else unit.retractLandingGears() end
+	end)
+	register:addAction("lightStart", "lightStartFlight",  function()
+		if unit.isAnyHeadlightSwitchedOn() == 1 then unit.switchOffHeadlights() else unit.switchOnHeadlights() end
+	end)
 
-    register:addAction("speedupLoop", "speedupLoopFlight", function() Nav.axisCommandManager:updateCommandFromActionLoop(axisCommandId.longitudinal, 1.0) end)
-    register:addAction("speeddownLoop", "speeddownLoopFlight", function() Nav.axisCommandManager:updateCommandFromActionLoop(axisCommandId.longitudinal, -1.0) end)
+	register:addAction("antigravityStart", "antigravityStartFlight",  function() if antigrav ~= nil then antigrav.toggle() end end)
+    register:addAction("brakeStart", "brakeStartFlight",  function() brakeInput = 1 end)
+    register:addAction("stopenginesStart", "stopenginesStartFlight",  function() axisCommandManager:resetCommand(axisCommandId.longitudinal) end)
+    register:addAction("speedupStart", "speedupStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.longitudinal, 5.0) end)
+    register:addAction("speeddownStart", "speeddownStartFlight",  function() axisCommandManager:updateCommandFromActionStart(axisCommandId.longitudinal, -5.0) end)
+
+    register:addAction("speedupLoop", "speedupLoopFlight", function() axisCommandManager:updateCommandFromActionLoop(axisCommandId.longitudinal, 1.0) end)
+    register:addAction("speeddownLoop", "speeddownLoopFlight", function() axisCommandManager:updateCommandFromActionLoop(axisCommandId.longitudinal, -1.0) end)
     
     register:addAction("forwardStop", "forwardStopFlight", function() pitchInput = 0 end)
     register:addAction("backwardStop", "backwardStopFlight", function() pitchInput = 0 end)
     register:addAction("yawleftStop", "yawleftStopFlight", function() yawInput = 0 end)
     register:addAction("yawrightStop", "yawrightStopFlight", function() yawInput = 0 end)
-    register:addAction("strafeleftStop", "strafeleftStopFlight", function() Nav.axisCommandManager:updateCommandFromActionStop(axisCommandId.lateral, 1.0) end)
-    register:addAction("straferightStop", "straferightStopFlight", function() Nav.axisCommandManager:updateCommandFromActionStop(axisCommandId.lateral, -1.0) end)
+    register:addAction("strafeleftStop", "strafeleftStopFlight", function() axisCommandManager:updateCommandFromActionStop(axisCommandId.lateral, 1.0) end)
+    register:addAction("straferightStop", "straferightStopFlight", function() axisCommandManager:updateCommandFromActionStop(axisCommandId.lateral, -1.0) end)
     register:addAction("leftStop", "leftStopFlight", function() rollInput = 0 end)
     register:addAction("rightStop", "rightStopFlight", function() rollInput = 0 end)
-    register:addAction("upStop", "upStopFlight", function() Nav.axisCommandManager:updateCommandFromActionStop(axisCommandId.vertical, -1.0) end)
-    register:addAction("downStop", "downStopFlight", function() Nav.axisCommandManager:updateCommandFromActionStop(axisCommandId.vertical, 1.0) end)
+    register:addAction("upStop", "upStopFlight", function() axisCommandManager:updateCommandFromActionStop(axisCommandId.vertical, -1.0) end)
+    register:addAction("downStop", "downStopFlight", function() axisCommandManager:updateCommandFromActionStop(axisCommandId.vertical, 1.0) end)
     register:addAction("brakeStop", "brakeStopFlight", function() brakeInput = 0 end)
     local function NormalFlight()
 		local s = system
@@ -113,16 +126,16 @@ function self:register(env)
 
         -- Longitudinal Translation
         local longitudinalEngineTags = 'thrust analog longitudinal'
-        local longitudinalCommandType = Nav.axisCommandManager:getAxisCommandType(axisCommandId.longitudinal)
+        local longitudinalCommandType = axisCommandManager:getAxisCommandType(axisCommandId.longitudinal)
         if (longitudinalCommandType == axisCommandType.byThrottle) then
-            local longitudinalAcceleration = Nav.axisCommandManager:composeAxisAccelerationFromThrottle(longitudinalEngineTags,axisCommandId.longitudinal)
+            local longitudinalAcceleration = axisCommandManager:composeAxisAccelerationFromThrottle(longitudinalEngineTags,axisCommandId.longitudinal)
             Nav:setEngineForceCommand(longitudinalEngineTags, longitudinalAcceleration, keepCollinearity)
         elseif  (longitudinalCommandType == axisCommandType.byTargetSpeed) then
-            local longitudinalAcceleration = Nav.axisCommandManager:composeAxisAccelerationFromTargetSpeed(axisCommandId.longitudinal)
+            local longitudinalAcceleration = axisCommandManager:composeAxisAccelerationFromTargetSpeed(axisCommandId.longitudinal)
             autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. longitudinalEngineTags
             autoNavigationAcceleration = autoNavigationAcceleration + longitudinalAcceleration
-            if (Nav.axisCommandManager:getTargetSpeed(axisCommandId.longitudinal) == 0 or -- we want to stop
-                Nav.axisCommandManager:getCurrentToTargetDeltaSpeed(axisCommandId.longitudinal) < - Nav.axisCommandManager:getTargetSpeedCurrentStep(axisCommandId.longitudinal) * 0.5) -- if the longitudinal velocity would need some braking
+            if (axisCommandManager:getTargetSpeed(axisCommandId.longitudinal) == 0 or -- we want to stop
+                axisCommandManager:getCurrentToTargetDeltaSpeed(axisCommandId.longitudinal) < - axisCommandManager:getTargetSpeedCurrentStep(axisCommandId.longitudinal) * 0.5) -- if the longitudinal velocity would need some braking
             then
                 autoNavigationUseBrake = true
             end
@@ -131,24 +144,24 @@ function self:register(env)
 
         -- Lateral Translation
         local lateralStrafeEngineTags = 'thrust analog lateral'
-        local lateralCommandType = Nav.axisCommandManager:getAxisCommandType(axisCommandId.lateral)
+        local lateralCommandType = axisCommandManager:getAxisCommandType(axisCommandId.lateral)
         if (lateralCommandType == axisCommandType.byThrottle) then
-            local lateralStrafeAcceleration =  Nav.axisCommandManager:composeAxisAccelerationFromThrottle(lateralStrafeEngineTags,axisCommandId.lateral)
+            local lateralStrafeAcceleration =  axisCommandManager:composeAxisAccelerationFromThrottle(lateralStrafeEngineTags,axisCommandId.lateral)
             Nav:setEngineForceCommand(lateralStrafeEngineTags, lateralStrafeAcceleration, keepCollinearity)
         elseif  (lateralCommandType == axisCommandType.byTargetSpeed) then
-            local lateralAcceleration = Nav.axisCommandManager:composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral)
+            local lateralAcceleration = axisCommandManager:composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral)
             autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. lateralStrafeEngineTags
             autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
         end
 
         -- Vertical Translation
         local verticalStrafeEngineTags = 'thrust analog vertical'
-        local verticalCommandType = Nav.axisCommandManager:getAxisCommandType(axisCommandId.vertical)
+        local verticalCommandType = axisCommandManager:getAxisCommandType(axisCommandId.vertical)
         if (verticalCommandType == axisCommandType.byThrottle) then
-            local verticalStrafeAcceleration = Nav.axisCommandManager:composeAxisAccelerationFromThrottle(verticalStrafeEngineTags,axisCommandId.vertical)
+            local verticalStrafeAcceleration = axisCommandManager:composeAxisAccelerationFromThrottle(verticalStrafeEngineTags,axisCommandId.vertical)
             Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity, 'airfoil', 'ground', '', tolerancePercentToSkipOtherPriorities)
         elseif  (verticalCommandType == axisCommandType.byTargetSpeed) then
-            local verticalAcceleration = Nav.axisCommandManager:composeAxisAccelerationFromTargetSpeed(axisCommandId.vertical)
+            local verticalAcceleration = axisCommandManager:composeAxisAccelerationFromTargetSpeed(axisCommandId.vertical)
             autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. verticalStrafeEngineTags
             autoNavigationAcceleration = autoNavigationAcceleration + verticalAcceleration
         end

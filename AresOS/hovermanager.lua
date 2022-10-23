@@ -24,7 +24,7 @@ function self:register(env)
                     lastHighSet = system.getArkTime()
                     newAlt = groundAltitudeMax
                 elseif unit.getThrottle and unit.getThrottle() < 1 and (system.getArkTime() - lastHighSet) > 6 then
-                    newAlt = 2
+                    newAlt = 1
                 end
 
                 if newAlt ~= setGroundAlt and Nav then
