@@ -21,6 +21,7 @@
 
 local self = {}
 local setupMode = false
+local freeMouse = false
 self.loadPrio = 10
 local config = getPlugin("config")
 local screenDefault = {
@@ -51,6 +52,15 @@ function self:endHotkeyPressed(hotkey)
     self.pressedRegister[hotkey] = nil
 end
 
+function self:freeMouse(freeOrNot)
+	if setupMode and freeOrNot then
+		print("setupMode off")
+		setupMode = false
+	end
+
+	freeMouse = freeOrNot
+	system.lockView(freeMouse)
+end
 function self:addButton(viewName,buttonName,x,y,width,height,func)
 
 end
@@ -182,17 +192,31 @@ function screenObj(name)
     return screenDef[name]
 end
 
-function drawAllScreensCss()
-	local persp = self:getPerspective()
-    if modeColors[persp] == nil then
-        modeColors[persp] = 290
-    end
-    local currHsl = math.max(0, math.min(modeColors[persp],360))
+local colorCache = nil
+function self:colors()
+	--local persp = self:getPerspective()
+	if colorCache == nil or colorCache.hsl ~= modeColors[mode] then
+		if modeColors[mode] == nil then
+			modeColors[mode] = 290
+		end
+		local hsl = math.max(0, math.min(modeColors[mode],360))
+		colorCache = {
+			hsl=hsl,
+			sqLeftHsl=hsl + 270.0,
+			sqTwoRight=hsl + 180.0,
+			warn=5
+		}
 
-    local sqLeftHsl = currHsl + 270.0
-    if sqLeftHsl > 360 then sqLeftHsl = sqLeftHsl - 360 end
-    local sqTwoRight = currHsl + 180.0
-    if sqTwoRight > 360 then sqTwoRight = sqTwoRight - 360 end
+		if colorCache.sqLeftHsl > 360 then colorCache.sqLeftHsl = colorCache.sqLeftHsl - 360 end
+		if colorCache.sqTwoRight > 360 then colorCache.sqTwoRight = colorCache.sqTwoRight - 360 end
+
+		if colorCache.hsl < 45 or colorCache.hsl > 315 then colorCache.warn = colorCache.sqTwoRight end
+	end
+
+	return colorCache
+end
+function drawAllScreensCss()
+    local colors = self:colors()
 	
     local css = [[
                             * { font-family:Montserrat }
@@ -201,13 +225,18 @@ function drawAllScreensCss()
                             svg svg { overflow: visible }
                             .screenSvg { position: relative; margin: auto 0; }
                             .screen { margin:0; padding:0; position: absolute; left: 0; top: 0; border: 2px solid transparent }
+							.lfill { fill:hsl(]].. colors.hsl ..[[, 93.6%, 56.9%)}
+                            .sfill { fill:hsl(]].. colors.hsl ..[[, 100%, 50%) }
+							.lstroke { stroke:hsl(]].. colors.hsl ..[[, 93.6%, 56.9%)}
+                            .sstroke { stroke:hsl(]].. colors.hsl ..[[, 100%, 50%) }
+							.bstroke { stroke:black }
                         ]]
 
     if setupMode then
         css = css .. [[
-							.screen { border: 2px solid hsl(]].. currHsl ..[[, 93.6%, 56.9%) }
+							.screen { border: 2px solid hsl(]].. colors.hsl ..[[, 93.6%, 56.9%) }
 							.menu { position: absolute; right: 0; top: 0; width: 100%; height: 3.125%; overflow: hidden; z-index: 1000 }
-							.mItm { z-index:inherit; background-color:hsl(]].. currHsl ..[[, 100%, 50%);position: relative; float: right; height: 100%; width: calc(100% / 24); border: 2px solid hsl(]].. currHsl ..[[, 93.6%, 56.9%); overflow: hidden; color: white;display: flex;align-items: center;justify-content: center; }
+							.mItm { z-index:inherit; background-color:hsl(]].. colors.hsl ..[[, 100%, 50%);position: relative; float: right; height: 100%; width: calc(100% / 24); border: 2px solid hsl(]].. colors.hsl ..[[, 93.6%, 56.9%); overflow: hidden; color: white;display: flex;align-items: center;justify-content: center; }
 						]]
     end
 
@@ -229,7 +258,7 @@ function drawAllScreensCss()
 					local curr = config:get(keyName, 0)
 					if curr == 1 then
 						css = css .. [[
-								#]]..name..[[ > .menu .mItm.n]]..nr..[[ { background-color:hsl(]].. sqTwoRight ..[[, 100%, 50%) }
+								#]]..name..[[ > .menu .mItm.n]]..nr..[[ { background-color:hsl(]].. colors.sqTwoRight ..[[, 100%, 50%) }
 						]]
 					end
 				end
@@ -321,13 +350,13 @@ function drawAllScreens()
 	end
 
 	local screenHtml = ""
-	if setupMode then
+	if setupMode or freeMouse then
 		local mouseX = 	system.getMousePosX() / screenDefault.totalWidth
         local mouseY = 	system.getMousePosY() / screenDefault.totalHeight
 
         screenHtml = [[
 			<svg style="z-index: 10000;position: absolute;left:]]..(mouseX*100)..[[%;top:]]..(mouseY*100)..[[%" height="20px" width="20px" viewBox="0 0 512 512">
-				<path class="sfill" d="M434.214,344.448L92.881,3.115c-3.051-3.051-7.616-3.947-11.627-2.304c-3.989,1.643-6.592,5.547-6.592,9.856v490.667
+				<path class="sfill bstroke" d="M434.214,344.448L92.881,3.115c-3.051-3.051-7.616-3.947-11.627-2.304c-3.989,1.643-6.592,5.547-6.592,9.856v490.667
 					c0,4.459,2.773,8.448,6.976,10.005c1.195,0.448,2.453,0.661,3.691,0.661c3.051,0,6.037-1.323,8.085-3.733l124.821-145.6h208.427
 					c4.309,0,8.213-2.603,9.856-6.592C438.182,352.085,437.265,347.52,434.214,344.448z"/>
 			</svg>
@@ -423,7 +452,7 @@ function self:register(env)
 			register:addAction(screenName.."Html",totalViewName.."Html", function()
 				local mouseX = ((system.getMousePosX() / screenDefault.totalWidth) - screen.offsetx) / screen.width
 				local mouseY = ((system.getMousePosY() / screenDefault.totalHeight) - screen.offsety) / screen.height
-				if setupMode == false then
+				if setupMode == false and freeMouse == false then
 					mouseX, mouseY = -1, -1
 				end
 				--print("render " .. screenName.."Html".. "for " .. viewName .. " and total view " ..totalViewName)
@@ -632,7 +661,7 @@ function self:register(env)
 		
         register:addAction("leftmouseStart","mouseStartTracker",
                 function()
-                    if setupMode then
+                    if setupMode or freeMouse then
                         local mouseX = 	system.getMousePosX() / screenDefault.totalWidth
                         local mouseY = 	system.getMousePosY() / screenDefault.totalHeight
                         register:callAction("mouseDown",mouseX,mouseY,"hud")
@@ -644,7 +673,7 @@ function self:register(env)
         )
         register:addAction("leftmouseStop","mouseStopTracker",
                 function()
-                    if setupMode then
+                    if setupMode or freeMouse then
                         local mouseX = 	system.getMousePosX() / screenDefault.totalWidth
                         local mouseY = 	system.getMousePosY() / screenDefault.totalHeight
                         register:callAction("mouseUp",mouseX,mouseY,"hud")
@@ -670,6 +699,19 @@ function self:register(env)
 			end
 		end,
 		"Activate/Deactivate screener setup mode"
+	)
+	local free = false
+	CommandHandler:AddCommand("mouse",
+		function(prompt)
+			free = not free
+			self:freeMouse(free)
+			if free then
+				print("mouse on")
+			else
+				print("mouse off")
+			end
+		end,
+		"Mouse on/off"
 	)
 	
 end

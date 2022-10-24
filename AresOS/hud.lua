@@ -4,52 +4,41 @@ local staticRenderList = {}
 local mode = 0
 local Flight = nil
 local Horizon = nil
-function renderHudGeneralCss()
-    if modeColors[mode] == nil then
-        modeColors[mode] = 290
-    end
-    local currHsl = math.max(0, math.min(modeColors[mode],360))
+local screener = nil
 
-    local sqLeftHsl = currHsl + 270.0
-    if sqLeftHsl > 360 then
-        sqLeftHsl = sqLeftHsl - 360
-    end
-    local sqTwoRight = currHsl + 180.0
-    if sqTwoRight > 360 then
-        sqTwoRight = sqTwoRight - 360
-    end
-	local warnColor = 5
-	if currHsl < 45 or currHsl > 315 then
-		warnColor = sqTwoRight
-	end
+function renderHudGeneralCss()
+	local colors = screener:colors()
+    local currHsl = colors.hsl
+
     return [[
-                            .lfill { fill:hsl(]].. currHsl ..[[, 93.6%, 56.9%)}
-                            .sfill { fill:hsl(]].. currHsl ..[[, 100%, 50%) }
-                            polygon { fill:hsl(]].. currHsl ..[[, 93.6%, 56.9%);opacity:0.8 }
-                            .majorLine, .minorLine {stroke:hsl(]].. currHsl ..[[, 100%, 50%);opacity:0.8;stroke-width:3;fill-opacity:0;}
-                            .minorLine {opacity:0.4}
-                            .text {fill:hsl(]].. currHsl ..[[, 100%, 50%);font-weight:bold}
-                            .warn { fill:hsl(]].. warnColor ..[[, 100%, 50%) !important;font-weight:bold }
-                            .sstroke { stroke:hsl(]].. currHsl ..[[, 100%, 50%) }
+                            #hudMain polygon { fill:hsl(]].. currHsl ..[[, 93.6%, 56.9%);opacity:0.8 }
+                            #hudMain .majorLine, .minorLine {stroke:hsl(]].. currHsl ..[[, 100%, 50%);opacity:0.8;stroke-width:3;fill-opacity:0;}
+                            #hudMain .minorLine {opacity:0.4}
+                            #hudMain .text {fill:hsl(]].. currHsl ..[[, 100%, 50%);font-weight:bold}
+                            #hudMain .warn { fill:hsl(]].. colors.warn ..[[, 100%, 50%) !important;font-weight:bold }
+                            #hudMain .sstroke { stroke:hsl(]].. currHsl ..[[, 100%, 50%) }
                             
-                            .pitch, .alt { stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%) }
-                            .spitch, .epitch, .salt { fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%) }
-                            .pitch {opacity:0.4;stroke-width:3}
-                            .spitch {text-anchor:start;font-size:12;font-weight:bold}
-                            .epitch {text-anchor:end;font-size:12;font-weight:bold}
+                            #hudMain .pitch, #hudMain .alt { stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%) }
+                            #hudMain .spitch, #hudMain .epitch, #hudMain .salt { fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%) }
+                            #hudMain .pitch {opacity:0.4;stroke-width:3}
+                            #hudMain .spitch {text-anchor:start;font-size:12;font-weight:bold}
+                            #hudMain .epitch {text-anchor:end;font-size:12;font-weight:bold}
                             
-                            .alt {opacity:0.4;stroke-width:3}
-                            .salt {text-anchor:start;font-size:12;font-weight:bold}
+                            #hudMain .alt {opacity:0.4;stroke-width:3}
+                            #hudMain .salt {text-anchor:start;font-size:12;font-weight:bold}
                             
-                            .roll {stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%);opacity:0.4;stroke-width:2}
-                            .sroll {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);text-anchor:middle;font-weight:bold}
+                            #hudMain .roll {stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%);opacity:0.4;stroke-width:2}
+                            #hudMain .sroll {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);text-anchor:middle;font-weight:bold}
                             
-                            .throttle {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);opacity:0.7}
-                            .textWeak, .textWeak text {fill-opacity:0.5}
+                            #hudMain .throttle {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);opacity:0.7}
+                            #hudMain .textWeak, #hudMain .textWeak text {fill-opacity:0.5}
                             
-                            .atext {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);font-weight:bold}
-                            .txtPoly, .txtPolyN { opacity:0.5;stroke-width:2;stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%);fill:none;stroke-linejoin:miter }
-                            .txtPolyN { stroke-dasharray:6, 2, 6, 2, 10 }
+                            #hudMain .atext {fill:hsl(]].. currHsl ..[[, 98.9%, 34.9%);font-weight:bold}
+							#hudMain .chS { text-anchor:start }
+							#hudMain .chM { text-anchor:middle }
+							#hudMain .chE { text-anchor:end }
+                            #hudMain .txtPoly, #hudMain .txtPolyN { opacity:0.5;stroke-width:2;stroke:hsl(]].. currHsl ..[[, 98.9%, 34.9%);fill:none;stroke-linejoin:miter }
+                            #hudMain .txtPolyN { stroke-dasharray:6, 2, 6, 2, 10 }
                         ]]
 end
 register:addAction("staticCssStyle","hudGeneral",renderHudGeneralCss)
@@ -93,11 +82,11 @@ function staticRender()
                                 ]]
             if (mode == 0) then
                 content = content .. [[
-                                        <text x="960" y="33" text-anchor="middle" id="atmosOrSpace">Surface Mode</text>
+                                        <text x="960" y="33" class="chM" id="atmosOrSpace">Surface Mode</text>
                                     ]]
             else
                 content = content .. [[
-                                        <text x="960" y="33" text-anchor="middle" id="atmosOrSpace">Space Mode</text>
+                                        <text x="960" y="33" class="chM" id="atmosOrSpace">Space Mode</text>
                                     ]]
             end
             content = content.. [[
@@ -120,59 +109,61 @@ self.viewTags = {"hud"}
 function self:setScreen(screen)
     local altitude = core.getAltitude()
     local velocity = construct.getVelocity()
-    local speed = vec3(velocity):len()
+	local veloVector = vec3(velocity)
+    local speed = veloVector:len()
     local worldV = vec3(core.getWorldVertical())
     local constrF = vec3(construct.getWorldOrientationForward())
     local constrR = vec3(construct.getWorldOrientationRight())
+	local vSpd = -worldV:dot(veloVector)
 	
     local roll = 0
     local pitch = 0
 
+	local kmh = false
+
     local rollOrYaw = "ROLL"
-    local speedAsKmh = utils.round(speed * 3.6)
     local altOrSpeedVal = altitude
     local altOrSpeedTxt = "ALT"
-    local speedOrBreak = "KM/H"
+	local vSpeedVal = vSpd
+    local speedOrBreak = "M/S"
+	local speedOrBreakVal = round(speed)
+	if kmh then
+		speedOrBreak = "KM/H"
+		speedOrBreakVal = round(speedOrBreakVal*3.6)
+	end
 
     local relativePitch = 0
     local relativeYaw = 0
     if speed > 5 then
         relativePitch = getRelativePitch(velocity)
         relativeYaw = getRelativeYaw(velocity)
-        --[[invertPitchYaw = false --export: Inverts pitch and yaw values for ships that had its core turned 180°
-        if invertPitchYaw then
-            relativePitch = relativePitch + 180
-            relativeYaw = relativeYaw + 180
-        end]]--
     end
-		
-    --if true then return "" end
-	
+
 	if unit.getClosestPlanetInfluence() > 0 or (altitude > 0 and  altitude < 100000) then
 		mode = 0
 	else
 		mode = 1
 	end
 	
-	
     if mode == 1 then
         pitch = relativePitch
         roll = relativeYaw
 
         rollOrYaw = "YAW"
-        altOrSpeedTxt = "KM/H"
-        altOrSpeedVal = speedAsKmh
-
+        altOrSpeedTxt = "M/S"
+        altOrSpeedVal = speed
+		if kmh then
+			altOrSpeedTxt = "KM/H"
+			altOrSpeedVal = altOrSpeedVal*3.6
+		end
+		
         speedOrBreak = "BREAK"
 
-        --speedAsKmh = "-"
 		if Flight ~= nil then
-			speedAsKmh = getDistanceDisplayString(Flight:getBrakeTime(),2)
+			speedOrBreakVal = getDistanceDisplayString(Flight:getBrakeTime(),2)
+		else
+			speedOrBreakVal = "-"
 		end
-        --speedAsKmh = register:callActionHtml("breakDistRender")
-
-        --speedAsKmh = "0m - 00:00:00"
-
     else
         -- Pitch based on World coordinates
         pitch = 180 - getRoll(worldV, constrR, constrF)
@@ -198,36 +189,38 @@ function self:setScreen(screen)
 			fuelTxtHtml = fuelTxtHtml .. [[<text x="785" y="]]..fuelOffset..[[" text-anchor="start">]]..string.upper(fuelName)..[[</text>]]
 			local fuelClass = ""
 			local currFuel = self:minFuelState(fuelName)
-			if currFuel < blinkFuelRange then fuelClass = [[class="warn"]] else fuelClass = [[class="textWeak"]] end
-			fuelValHtml = fuelValHtml .. [[<text x="785" y="]]..(fuelOffset+14)..[[" ]]..fuelClass..[[ text-anchor="start">]]..currFuel..[[%</text>]]
+			if currFuel < blinkFuelRange then fuelClass = [[class="warn chS"]] else fuelClass = [[class="textWeak chS"]] end
+			fuelValHtml = fuelValHtml .. [[<text x="785" y="]]..(fuelOffset+14)..[[" ]]..fuelClass..[[ >]]..currFuel..[[%</text>]]
 			fuelOffset = fuelOffset + 25
 		end
 	end
-	
+
 	local trottle = 0
     if unit.getThrottle then trottle = unit.getThrottle() end
-	
+
+	--local round = utils.round
     content = content.. [[
-                            <text x="785" y="520" text-anchor="start">PITCH</text>
-                            <text x="1135" y="520" text-anchor="end">]]..altOrSpeedTxt..[[</text>
-                            <text x="960" y="676" text-anchor="middle">]]..rollOrYaw..[[</text>
-                            <text x="790" y="660" text-anchor="start"></text>
-							<text x="1135" y="660" text-anchor="end">THRL</text>
+                            <text x="785" y="520" class="chS">PITCH</text>
+                            <text x="1135" y="520" class="chE">]]..altOrSpeedTxt..[[</text>
+                            <text x="960" y="676" class="chM">]]..rollOrYaw..[[</text>
+                            <text x="790" y="660" class="chS"></text>
+							<text x="1135" y="660" class="chE">THRL</text>
 							]]..fuelTxtHtml..[[
                         </g>
                         <g font-size="12">
-                            <text x="785" y="534" text-anchor="start">]].. utils.round(pitch)..[[</text>
-                            <text x="1135" y="534" text-anchor="end">]].. utils.round(altOrSpeedVal)..[[</text>
-                            <text x="960" y="690" text-anchor="middle">]]..utils.round(roll)..[[</text>
-                            <text x="790" y="674" text-anchor="start">]]..""..[[</text>
-							<text x="1135" y="674" text-anchor="end">]]..utils.round(trottle)..[[%</text>
+                            <text x="785" y="534" class="chS">]].. round(pitch)..[[</text>
+                            <text x="1135" y="534" class="chE">]].. round(altOrSpeedVal)..[[</text>
+                            <text x="960" y="690" class="chM">]]..round(roll)..[[</text>
+                            <text x="790" y="674" class="chS">]]..""..[[</text>
+							<text x="1135" y="674" class="chE">]]..round(trottle)..[[%</text>
 							]]..fuelValHtml..[[
                         ]]
 
     content = content.. [[
-                                    <text x="1135" y="409" text-anchor="end">]]..speedAsKmh..[[</text>
+                                    <text x="1135" y="409" class="chE">]]..speedOrBreakVal..[[</text>
+									<text x="785" y="409" class="chS">]]..round(vSpd)..[[</text>
                         ]]
---									<text x="785" y="409" text-anchor="start">]]..speedAsKmh..[[</text>
+
     content = content.. [[
                                     </g>                            
                                 </g>
@@ -239,7 +232,7 @@ function self:setScreen(screen)
 
             for i = pitchC-25,pitchC+25 do
                 if (i%10==0) then
-                    num = i
+                    local num = i
 
                     if num < -179 then
                         num = num + 360
@@ -283,7 +276,7 @@ function self:setScreen(screen)
             lastAltDraw = ""
             for i = alt-25,alt+25 do
                 if (i%10==0) then
-                    num = i
+                    local num = i
 
                     lastAltDraw = lastAltDraw..[[<g transform="translate(0 ]]..(-i*5 + alt*5)..[[)">
                                             <text x="1175" y="543" class="salt" style="font-size:12">]]..(num * altOrSpeedMulti)..[[</text></g>]]
@@ -307,7 +300,7 @@ function self:setScreen(screen)
             rollC = utils.round(relativeYaw)
             for i = rollC-35,rollC+35 do
                 if (i%10==0) then
-                    num = math.abs(i)
+                    local num = math.abs(i)
                     if (num > 180) then
                         num = 180 + (180-num)
                     end
@@ -328,7 +321,9 @@ function self:setScreen(screen)
             end
         end
     end
-
+	if mode == 0 then
+		content = content .. Horizon:setScreen(screen)
+	end
     content = content..[[
                             </svg>
                         ]]
@@ -337,9 +332,7 @@ function self:setScreen(screen)
         --content = content .. register:callActionHtml("svgSurface")
     end
 	
-	if mode == 0 then
-		content = content .. Horizon:setScreen(screen)
-	end
+
     --content = content .. [[<div style="position: absolute;left:20px;top:100px">]]..TODO.."</div>"
 
     if system.getArkTime() - bootTime < 2 then
@@ -432,19 +425,20 @@ function getTanks()
         return mv * (1 - (f1 + f2))        
     end
 	local tanks = {atmo = {},space ={} ,rocket = {}}
+	local tankNames = {atmo = "atmofueltank",space ="spacefueltank" ,rocket = "rocketfueltank"}
 	local slots = getPlugin("slots")
 	for _,id in pairs(ids) do
 		local type = core.getElementClassById(id)
 		local typeTranslate = slots:getClassType(type)
 		if typeTranslate ~= nil then
-			if typeTranslate == "atmofueltank" or typeTranslate == "spacefueltank" or typeTranslate == "rocketfueltank" then
+			if typeTranslate == tankNames.atmo or typeTranslate == tankNames.space or typeTranslate == tankNames.rocket then
 				local hp = core.getElementMaxHitPointsById(id)
 				local handling = 0
-				if typeTranslate == "atmofueltank" then
+				if typeTranslate == tankNames.atmo then
 					handling = fuelTankHandlingAtmos
-				elseif typeTranslate == "spacefueltank" then
+				elseif typeTranslate == tankNames.space then
 					handling = fuelTankHandlingSpace
-				elseif typeTranslate == "rocketfueltank" then
+				elseif typeTranslate == tankNames.rocket then
 					handling = fuelTankHandlingRocket
 				end
 				local MaxVolume, massEmpty = tankStatsDefault(typeTranslate,hp,handling)
@@ -456,11 +450,11 @@ function getTanks()
 				end
 				
 				local list = {[1] = id,["mv"] = MaxVolume,["me"] = massEmpty}
-				if typeTranslate == "atmofueltank" then
+				if typeTranslate == tankNames.atmo then
 					table.insert(tanks.atmo, list)
-				elseif typeTranslate == "spacefueltank" then
+				elseif typeTranslate == tankNames.space then
 					table.insert(tanks.space, list)
-				elseif typeTranslate == "rocketfueltank" then
+				elseif typeTranslate == tankNames.rocket then
 					table.insert(tanks.rocket, list)
 				end
 			end
@@ -490,7 +484,7 @@ function self:register(env)
 
 	Flight = getPlugin("BaseFlight",true)
 	Horizon = getPlugin("artificialhorizon",true)
-	local screener = getPlugin("screener")
+	screener = getPlugin("screener")
 	screener:registerDefaultScreen("mainScreenThird","Hud")
 	screener:registerDefaultScreen("mainScreenFirst","Hud")
 	screener:addView("Hud",self)

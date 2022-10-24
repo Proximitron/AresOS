@@ -3,7 +3,6 @@ local self = {}
 local artificialHorizonPreRender = ""
 local artificialHorizonPreRenderN = ""
 self.viewTags = {"hud"}
-
 -- leftmousestart
 -- leftmousestop
 function self:onMouseDown(x,y,button)
@@ -120,8 +119,8 @@ function self:setScreen(screen)
                 end
 
                 currRender = currRender..[[
-                                        <text x="59" y="]].. textY+textPosMod ..[[" text-anchor="start" class="atext">]].. textStr ..[[</text>
-                                        <text x="-59" y="]].. textY+textPosMod ..[[" text-anchor="end" class="atext">]].. textStr ..[[</text>
+                                        <text x="59" y="]].. textY+textPosMod ..[[" class="atext chS">]].. textStr ..[[</text>
+                                        <text x="-59" y="]].. textY+textPosMod ..[[" class="atext chE">]].. textStr ..[[</text>
                                         
                                         <polyline points="35 ]].. textY ..[[ 56 ]].. textY ..[[ 56 ]].. (textY+textPosYMod) ..[[" class="]].. txtPolyName ..[["/>		
                                         <polyline points="-35 ]].. textY ..[[ -56 ]].. textY ..[[ -56 ]].. (textY+textPosYMod) ..[[" class="]].. txtPolyName ..[["/>
@@ -160,6 +159,7 @@ function self:setScreen(screen)
 end
 function self:register(env)
     _ENV = env
-	-- This plugin is not made to load alone. It is part of hud. Let hud load it if required.	
+	
+	-- This plugin is not made to load alone. It is part of hud. Let hud load it if required.
 end
 return self

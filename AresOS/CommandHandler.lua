@@ -9,7 +9,7 @@ function CommandHandler(text)
     text = string.lower(text)
     local prefix = string.sub(text,1,1)
     if prefix ~= self.prefix then return end
-    local command = mysplit(string.sub(text,2,#text))
+    local command = split(string.sub(text,2,#text))
     local a,error = pcall(CommandList[1][prefix][1][command[1]], command)
     if not a then print(error) end
 end
