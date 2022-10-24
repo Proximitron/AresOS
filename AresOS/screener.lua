@@ -493,7 +493,7 @@ function self:register(env)
 		if clickx >= 0 and clickx < xvalwidth then
 			if clicky >= 0 and clicky < yvalheight then
 				-- height of menu
-				if clicky < menuItemHeight then
+				if not freeMouse and clicky < menuItemHeight then
 					if up then
 						for index, viewName in pairs(self:getViewList(screen.tag)) do
 

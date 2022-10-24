@@ -6,6 +6,12 @@ local Flight = nil
 local Horizon = nil
 local screener = nil
 
+function self:onMouseDown(x,y,button)
+	print("track: "..x.."_"..y)
+end
+function self:onMouseUp(x,y,button)
+	print("track: "..x.."_"..y)
+end
 function renderHudGeneralCss()
 	local colors = screener:colors()
     local currHsl = colors.hsl

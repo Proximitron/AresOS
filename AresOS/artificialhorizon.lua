@@ -3,14 +3,7 @@ local self = {}
 local artificialHorizonPreRender = ""
 local artificialHorizonPreRenderN = ""
 self.viewTags = {"hud"}
--- leftmousestart
--- leftmousestop
-function self:onMouseDown(x,y,button)
-	system.print("track: "..x.."_"..y)
-end
-function self:onMouseUp(x,y,button)
-	system.print("track: "..x.."_"..y)
-end
+
 function self:requireRerender(screen)
 	return true
 end
