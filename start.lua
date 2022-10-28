@@ -91,8 +91,8 @@ function plugins:unloadPlugin(name,noPrefix)
 		package.loaded[prefixedName] = nil
 	end
 	if pluginCache[name] ~= nil then
-		if type(pluginCache[name]) == "table" and type(pluginCache[name].unregister) == "function" then
-			pluginCache[name].unregister()
+		if type(pluginCache[name]) == "table" and type(pluginCache[name].deregister) == "function" then
+			pluginCache[name].deregister()
 		end
 		pluginCache[name] = nil
 	end

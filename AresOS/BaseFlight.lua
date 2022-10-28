@@ -27,7 +27,7 @@ function self:register(env)
 	local gearExtended = unit.isAnyLandingGearDeployed()
 	
 	local axisCommandManager = Nav.axisCommandManager
-	axisCommandManager:setTargetGroundAltitude(30)
+	axisCommandManager:setTargetGroundAltitude(1)
     --if vec3(construct.getWorldVelocity()):len() < 10 then brakeInput = 1 end
 
     register:addAction("systemOnUpdate", "NavUpdate",  function() Nav:update() end)

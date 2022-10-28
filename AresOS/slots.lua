@@ -34,21 +34,22 @@ function self:getElementList()
     return self.elementsIdList
 end
 
--- First 5 letters of name
+
 local unitTypeClass = {
 	RemoteControlUnit = "remote", CockpitHovercraftUnit = "command", PVPSeatUnit = "gunner" , CockpitCommandmentUnit = "command", CockpitFighterUnit = "command"
 }
+-- First 5 letters of name
 local slotSubClass = {
-	Weapo = "weapon", Shiel = "shield", Radar = "radar" , CoreU = "core"
+	Weapo = "weapon", Shiel = "shield", Radar = "radar" , CoreU = "core", Hover = "hover"
 }
 local slotClasses = {
     AntiGravityGeneratorUnit="antigrav",WarpDriveUnit="warpdrive",DataBankUnit="databases",
     ReceiverUnit = "receiver",EmitterUnit="emitter",ScreenUnit="screens",CombatDefense="transponder",
-    AtmoFuelContainer = "atmofueltank",SpaceFuelContainer = "spacefueltank",RocketFuelContainer = "rocketfueltank",CounterUnit="counter",laserDetector="laser",
-    SpaceEngine = "engine"
+    AtmoFuelContainer = "atmofueltank",SpaceFuelContainer = "spacefueltank",RocketFuelContainer = "rocketfueltank",CounterUnit="counter",LaserDetector="laser",
+    SpaceEngine = "engine", AtmosphericVerticalBoosterLargeGroup="booster",AtmosphericVerticalBoosterMediumGroup="booster",AtmosphericVerticalBoosterSmallGroup="booster"
 }
 local slotLists = {
-    weapon=true,databases=true,screens=true,atmofueltank=true,spacefueltank=true,rocketfueltank=true,radar=true,engine=true
+    weapon=true,databases=true,screens=true,atmofueltank=true,spacefueltank=true,rocketfueltank=true,radar=true,engine=true,hover=true,booster=true
 }
 local eventRegister = {
   core = {"onStressChanged(stress)"},
@@ -112,8 +113,9 @@ function self:register(env)
     end
     for _, slotElement in pairs(self:getSlots()) do
         local class = slotElement.getClass()
-		local type = self:getClassType(class)
 		
+		local type = self:getClassType(class)
+		--print("class is " .. class.. " type "..type)
 		if type == nil then
 			system.print("Unrecognized Type: "..class)
 		else
@@ -126,8 +128,8 @@ function self:register(env)
     end
 
     function compare(a, b)
-        if a ~= nil and a.getId and b ~= nil and b.getId then
-            return a.getId() < b.getId()
+        if a ~= nil and a.getLocalId and b ~= nil and b.getLocalId then
+            return a.getLocalId() < b.getLocalId()
         end
         return nil
     end

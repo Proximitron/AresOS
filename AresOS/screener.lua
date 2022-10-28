@@ -21,7 +21,7 @@
 
 local self = {}
 local setupMode = false
-local freeMouse = false
+local freeMouseMode = false
 self.loadPrio = 10
 local config = getPlugin("config")
 local screenDefault = {
@@ -35,7 +35,8 @@ local screenDefault = {
     totalWidth = system.getScreenHeight(), -- 1920,
     totalHeight = system.getScreenWidth(), --1080,
 	perspective = "third",
-	parent = "mainScreenThird"
+	parent = "mainScreenThird",
+	mouseDown = false
 }
 local screenDef = {}
 
@@ -58,8 +59,8 @@ function self:freeMouse(freeOrNot)
 		setupMode = false
 	end
 
-	freeMouse = freeOrNot
-	system.lockView(freeMouse)
+	freeMouseMode = freeOrNot
+	system.lockView(freeMouseMode)
 end
 function self:addButton(viewName,buttonName,x,y,width,height,func)
 
@@ -290,7 +291,7 @@ function drawAllScreens()
     end ]]--
     local addCss, menuRender, mouse = self:actionToHtml("staticCssStyle"), "", ""
 
-	local viewHudEntrys, innerScreens, mainScreens, screens = {}, {}, {}, {}
+	local viewHudEntrys, innerScreens, mainScreens = {}, {}, {}
 	
 	local persp = self:getPerspective()
 	
@@ -350,7 +351,7 @@ function drawAllScreens()
 	end
 
 	local screenHtml = ""
-	if setupMode or freeMouse then
+	if setupMode or freeMouseMode then
 		local mouseX = 	system.getMousePosX() / screenDefault.totalWidth
         local mouseY = 	system.getMousePosY() / screenDefault.totalHeight
 
@@ -378,24 +379,29 @@ function drawAllScreens()
                                 ]].. screenHtml .. [[
                             </body>
                         ]]
-    if debugscreen ~= nil then
-        debugscreen.setHTML(content)
-    end
+	if devMode then
+		for _, screenUnit in pairs(screens) do
+			if screenUnit.getName() == "debugscreen" then
+				screenUnit.setHTML(content)
+			end
+		end
+	end
 
     if #screens > 0 then
         for sname, realScreen in pairs(screens) do
-            --system.print(type(realScreen))
-            --self:renderView("monitor",realScreen.getMouseX(),realScreen.getMouseY(),realScreen.getMouseState() == 1)
+			realScreen.mouseX = realScreen.getMouseX()
+			realScreen.mouseY = realScreen.getMouseY()
+			realScreen.mouseDown = realScreen.getMouseState() == 1
+
             local name, newCode = "screen"..sname, nil
-            local screen = screenObj(name)
-            for _, viewName in pairs(self:getViewList(screen.tag)) do
+            for _, viewName in pairs(self:getViewList("screen")) do
                 local totalViewName = name.."_"..viewName
                 local keyName = "scval_"..totalViewName
                 local curr = config:get(keyName, 0)
                 if curr == 1 then
-                    if self:renderViewRequireRerender(viewName, realScreen.getMouseX(),realScreen.getMouseY(),realScreen.getMouseState() == 1,"real"..totalViewName) then
+                    if self:renderViewRequireRerender(viewName, realScreen) then
                         if newCode == nil then newCode = "" end
-                        newCode = newCode .. self:renderView(viewName,realScreen.getMouseX(),realScreen.getMouseY(),realScreen.getMouseState() == 1,"real"..totalViewName)
+                        newCode = newCode .. self:renderView(viewName,realScreen)
                     end
                 end
             end
@@ -407,7 +413,7 @@ function drawAllScreens()
     system.setScreen(content)
 end
 
-function self:triggerViewMouseEvent(up, name, x, y, screenUid, ...)
+function self:triggerViewMouseEvent(up, name, screen, ...)
     if viewRegister[name] == nil then
         system.print("Render of view '" .. (name or "???") .. "' failed, because it there is no such view registered!","")
     end
@@ -417,7 +423,7 @@ function self:triggerViewMouseEvent(up, name, x, y, screenUid, ...)
 		event = viewObj.onMouseDown
 	end
     if (event) then
-        local status, res = pcall(event, viewObj, x, y, screenUid, ...)
+        local status, res = pcall(event, viewObj, screen, ...)
 
         if status then
             return res
@@ -439,6 +445,7 @@ function self:register(env)
 
     screenDefault.totalWidth = system.getScreenWidth()
     screenDefault.totalHeight = system.getScreenHeight()
+	local globalMouseDown = false
 	
     function setActionHtml(screenName,viewName)
         local screen = screenObj(screenName)
@@ -450,13 +457,19 @@ function self:register(env)
 			if devMode then print("register setActionHtml for " .. keyName) end
 			--print("adding "..screenName.."Html")
 			register:addAction(screenName.."Html",totalViewName.."Html", function()
-				local mouseX = ((system.getMousePosX() / screenDefault.totalWidth) - screen.offsetx) / screen.width
-				local mouseY = ((system.getMousePosY() / screenDefault.totalHeight) - screen.offsety) / screen.height
-				if setupMode == false and freeMouse == false then
-					mouseX, mouseY = -1, -1
+				if setupMode == false and freeMouseMode == false then
+					screen.mouseX, screen.mouseY, screen.mouseXPos, screen.mouseYPos = -1, -1, -1, -1
+					screen.mouseDown = false
+				else
+					screen.mouseXPos = system.getMousePosX() - screen.offsetx
+					screen.mouseYPos = system.getMousePosY() - screen.offsety
+					screen.mouseX = ((system.getMousePosX() / screenDefault.totalWidth) - screen.offsetx) / screen.width
+					screen.mouseY = ((system.getMousePosY() / screenDefault.totalHeight) - screen.offsety) / screen.height
+					screen.mouseDown = screen.mouseDown and globalMouseDown
 				end
+
 				--print("render " .. screenName.."Html".. "for " .. viewName .. " and total view " ..totalViewName)
-				return self:renderView(viewName,mouseX,mouseY,false,totalViewName)
+				return self:renderView(viewName,screen)
 			end)
 		else
 			register:removeAction(screenName.."Html",totalViewName.."Html")
@@ -467,13 +480,16 @@ function self:register(env)
 		local screenName = screen.name
 		for _, realScreen in pairs(screens) do
 			if realScreen.getId() == screenEntity.getId() then
+				realScreen.mouseX = realScreen.getMouseX()
+				realScreen.mouseY = realScreen.getMouseY()
+				realScreen.mouseDown = realScreen.getMouseState() == 1
 				for _, viewName in pairs(register:getViewList(screen.tag)) do
 					local totalViewName = screenName.."_"..viewName
 					local keyName = "scval_"..totalViewName
 					local curr = config:get(keyName, 0)
 
 					if curr == 1 then
-						self:triggerViewMouseEvent(up,viewName,x,y,"real"..totalViewName)
+						self:triggerViewMouseEvent(up,viewName,realScreen)
 					end
 				end
 				return true
@@ -492,8 +508,13 @@ function self:register(env)
 		
 		if clickx >= 0 and clickx < xvalwidth then
 			if clicky >= 0 and clicky < yvalheight then
+				screen.mouseXPos, screen.mouseYPos = clickx, clicky
+				screen.mouseX, screen.mouseY = clickx / xvalwidth, clicky / yvalheight
+				print("clickx "..clickx.." to "..xvalwidth.." results in "..clickx / xvalwidth)
+				screen.mouseDown = not up
+
 				-- height of menu
-				if not freeMouse and clicky < menuItemHeight then
+				if not freeMouseMode and clicky < menuItemHeight then
 					if up then
 						for index, viewName in pairs(self:getViewList(screen.tag)) do
 
@@ -518,7 +539,7 @@ function self:register(env)
 						local keyName = "scval_"..totalViewName
 						local curr = config:get(keyName, 0)
 						if curr == 1 then
-							self:triggerViewMouseEvent(up, viewName,clickx / xvalwidth,clicky / yvalheight,totalViewName)
+							self:triggerViewMouseEvent(up, viewName,screen)
 						end
 					end
 				end
@@ -661,7 +682,8 @@ function self:register(env)
 		
         register:addAction("leftmouseStart","mouseStartTracker",
                 function()
-                    if setupMode or freeMouse then
+					globalMouseDown = true
+                    if setupMode or freeMouseMode then
                         local mouseX = 	system.getMousePosX() / screenDefault.totalWidth
                         local mouseY = 	system.getMousePosY() / screenDefault.totalHeight
                         register:callAction("mouseDown",mouseX,mouseY,"hud")
@@ -673,7 +695,8 @@ function self:register(env)
         )
         register:addAction("leftmouseStop","mouseStopTracker",
                 function()
-                    if setupMode or freeMouse then
+					globalMouseDown = false
+                    if setupMode or freeMouseMode then
                         local mouseX = 	system.getMousePosX() / screenDefault.totalWidth
                         local mouseY = 	system.getMousePosY() / screenDefault.totalHeight
                         register:callAction("mouseUp",mouseX,mouseY,"hud")

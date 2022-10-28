@@ -80,8 +80,14 @@ bereits geladen wurden und es selbst bereit zum Einsatz ist.
 Im Order ```Dual Universe/Game/data/lua/autoconfig/custom/AresOS``` kann die Datei ```optionals.lua``` liegen, welche
 zum Laden anderer Plugin-Dateien im gleichen Order verwendet werden kann. 
 
+## devMode
+* Viele Debug-Ausgaben werden nur im devMode angezeigt. Die gleichnamige globale Variable kann Entwicklern als Schalter dienen.
+* screener.lua: Angeschlossene Bildschirme mit dem Namen "debugscreen" werden als Ausgabe des aktuellen Schiffs-HUDs verwendet (zum Debugging im Browser u.ä.)
+* devTools.lua: Das Plugin namens devTools integriert die funktion "load" welche das Laden (neu Laden) eines plugins ermöglicht
+* dev.lua: Dient zum automatischen laden von Plugins aus Dateien oder anderen Funktionen die wärend der Entwicklung hilfreich sind. Wird in Releases nicht integriert.
+
 ## Erstellung eines Releases (autoconfig oder copy/paste script)
-In der Datei "convertToDU.sh" sind mehrere Beispiele zur Erstellung beliebiger Versionen. Sollte gewünscht
+In der Datei ```convertToDU.sh``` sind mehrere Beispiele zur Erstellung beliebiger Versionen. Sollte gewünscht
 sein eigene Plugins direkt in die Autoconfig hinzuzufügen, kann der Name direkt beim Parameter ```--plugins```
 angefügt werden.
 
@@ -92,8 +98,7 @@ angefügt werden.
 * "npm install -g luamin" (installiert luamin über npm)
 
 ### Erstellung einer Autoconfig
-Erstellung von Autoconfigs wird in Zukunft wieder problemlos, in der aktuellen version allerdings nicht
-empfehlenswert. Switch ist ```--output yaml```
+Eine Autoconfig kann direkt durch den switch ```--output yaml``` erstellt werden. Siehe Beispiele in ```convertToDU.sh```
 
 ### Schalter
 Plugins die vom Benutzer ein- und/oder ausgeschalten werden können, können sich für diese Funktion (meist in

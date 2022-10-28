@@ -6,10 +6,13 @@ local Flight = nil
 local Horizon = nil
 local screener = nil
 
-function self:onMouseDown(x,y,button)
-	print("track: "..x.."_"..y)
+function self:onMouseDown(screen)
+	local xPos, yPos = screen.mouseXPos, screen.mouseYPos
+	local x, y = screen.mouseX, screen.mouseY
+	print("track down: "..xPos.."_"..yPos.."_"..x.."_"..y)
 end
-function self:onMouseUp(x,y,button)
+function self:onMouseUp(screen)
+	local x, y = screen.mouseX, screen.mouseY
 	print("track: "..x.."_"..y)
 end
 function renderHudGeneralCss()
@@ -120,7 +123,9 @@ function self:setScreen(screen)
     local worldV = vec3(core.getWorldVertical())
     local constrF = vec3(construct.getWorldOrientationForward())
     local constrR = vec3(construct.getWorldOrientationRight())
-	local vSpd = -worldV:dot(veloVector)
+	
+	local constructVelocity = vec3(construct.getWorldVelocity())
+	local vSpd = -worldV:dot(constructVelocity)
 	
     local roll = 0
     local pitch = 0
@@ -130,6 +135,7 @@ function self:setScreen(screen)
     local rollOrYaw = "ROLL"
     local altOrSpeedVal = altitude
     local altOrSpeedTxt = "ALT"
+	local altOrSpeedChangeVal = vSpd
 	local vSpeedVal = vSpd
     local speedOrBreak = "M/S"
 	local speedOrBreakVal = round(speed)
@@ -179,8 +185,18 @@ function self:setScreen(screen)
         pitch = pitch * -1;
 
         -- Roll based on World coordinates
-        roll = getRoll(worldV, constrF, constrR) * -1		
+        roll = getRoll(worldV, constrF, constrR) * -1
     end
+	
+	if altOrSpeedChangeVal ~= 0 and altOrSpeedVal ~= 0 then
+		altOrSpeedChangeVal = round((altOrSpeedChangeVal/altOrSpeedVal) * 100)
+		if altOrSpeedChangeVal > 0 then
+			altOrSpeedChangeVal = "+ "..altOrSpeedChangeVal
+		else
+			altOrSpeedChangeVal = "- "..math.abs(altOrSpeedChangeVal)
+		end
+	end
+
 
     local content = staticRender(mode)
     content = content.. [[
@@ -216,6 +232,7 @@ function self:setScreen(screen)
                         <g font-size="12">
                             <text x="785" y="534" class="chS">]].. round(pitch)..[[</text>
                             <text x="1135" y="534" class="chE">]].. round(altOrSpeedVal)..[[</text>
+							<text x="1140" y="534" class="chS">]].. altOrSpeedChangeVal..[[%</text>
                             <text x="960" y="690" class="chM">]]..round(roll)..[[</text>
                             <text x="790" y="674" class="chS">]]..""..[[</text>
 							<text x="1135" y="674" class="chE">]]..round(trottle)..[[%</text>
@@ -224,7 +241,7 @@ function self:setScreen(screen)
 
     content = content.. [[
                                     <text x="1135" y="409" class="chE">]]..speedOrBreakVal..[[</text>
-									<text x="785" y="409" class="chS">]]..round(vSpd)..[[</text>
+									<text x="785" y="409" class="chS">]]..""..[[</text>
                         ]]
 
     content = content.. [[
@@ -276,8 +293,10 @@ function self:setScreen(screen)
         if altOrSpeed > 4000 then
             altOrSpeedMulti = 100
         end
+		
         alt = utils.round(altOrSpeed / altOrSpeedMulti)
-        if lastAlt ~= alt then
+		if lastAltDraw == nil then lastAltDraw = "" end
+        if false and lastAlt ~= alt then
             lastAlt = alt
             lastAltDraw = ""
             for i = alt-25,alt+25 do
@@ -294,8 +313,7 @@ function self:setScreen(screen)
                 elseif (i%5==0) then
                     len = 15
                 end
-
-                lastAltDraw = lastAltDraw..[[
+				lastAltDraw = lastAltDraw..[[
                                     <g transform="translate(0 ]]..(-i*5 + alt*5)..[[)">
                                         <line x1="]]..(1140+len)..[[" y1="540" x2="1140" y2="540" class="alt"/></g>]]
             end

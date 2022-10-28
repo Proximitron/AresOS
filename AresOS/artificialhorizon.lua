@@ -73,7 +73,7 @@ function self:setScreen(screen)
         roll = roll + 180
     end
 	--math.abs(roll)
-    local content = [[
+    local content = [[<g transform="translate(0 162)">
                         <svg id="artihorizon" height="70%" width="100%" viewBox="-640 -360 1280 720" style="display: block;margin: 0 auto;position: absolute;top: 22%; overflow: hidden">
                             <g transform="rotate(0 0,0) translate(0,0)">
                               <g transform="rotate(]] .. roll .. [[ 0,0) translate(0,]] .. math.floor(pitch * 8) .. [[)">
@@ -146,7 +146,7 @@ function self:setScreen(screen)
     end
 
     content = content .. [[
-                        </svg>
+                        </svg></g>
                         ]]
     return content
 end

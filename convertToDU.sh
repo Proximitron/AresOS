@@ -29,4 +29,4 @@ lua wrap.lua start.lua Ares_GunnerV0.9.conf --output yaml --slots databank:type=
 lua wrap.lua start.lua Ares_RemoteV0.9.conf --output yaml --slots databank:type=databank warpdrive:type=warpdrive core:type=core engine:type=engine,select=manual --name Ares_RemoteV0.9 --dev
 
 
-lua wrap.lua start.lua AresOSPubV0.9.conf --output yaml --slots warpdrive:type=warpdrive core:type=core --plugins register slots config Settings CommandHandler BaseFlight screener hud artificialhorizon --name AresOSPubV0.9 --minify
+lua wrap.lua start.lua AresOSPubV0.9.2.conf --output yaml --slots warpdrive:type=warpdrive core:type=core --plugins register slots config Settings CommandHandler BaseFlight screener hud artificialhorizon hovermanager --name AresOSPubV0.9.2 --minify
