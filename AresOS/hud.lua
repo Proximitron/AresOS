@@ -5,7 +5,7 @@ local mode = 0
 local Flight = nil
 local Horizon = nil
 local screener = nil
-
+--[[
 function self:onMouseDown(screen)
 	local xPos, yPos = screen.mouseXPos, screen.mouseYPos
 	local x, y = screen.mouseX, screen.mouseY
@@ -14,7 +14,7 @@ end
 function self:onMouseUp(screen)
 	local x, y = screen.mouseX, screen.mouseY
 	print("track: "..x.."_"..y)
-end
+end]]--
 function renderHudGeneralCss()
 	local colors = screener:colors()
     local currHsl = colors.hsl
@@ -91,11 +91,11 @@ function staticRender()
                                 ]]
             if (mode == 0) then
                 content = content .. [[
-                                        <text x="960" y="33" class="chM" id="atmosOrSpace">Surface Mode</text>
+                                        <text x="960" y="33" class="chM" id="atmosOrSpace"></text>
                                     ]]
             else
                 content = content .. [[
-                                        <text x="960" y="33" class="chM" id="atmosOrSpace">Space Mode</text>
+                                        <text x="960" y="33" class="chM" id="atmosOrSpace"></text>
                                     ]]
             end
             content = content.. [[
@@ -115,6 +115,7 @@ function staticRender()
 end
 
 self.viewTags = {"hud"}
+local lastSpeed = 0
 function self:setScreen(screen)
     local altitude = core.getAltitude()
     local velocity = construct.getVelocity()
@@ -130,8 +131,9 @@ function self:setScreen(screen)
     local roll = 0
     local pitch = 0
 
-	local kmh = false
-
+	local kmh = true
+	local altOrSpeedChangeValPositiv = true
+	
     local rollOrYaw = "ROLL"
     local altOrSpeedVal = altitude
     local altOrSpeedTxt = "ALT"
@@ -142,6 +144,7 @@ function self:setScreen(screen)
 	if kmh then
 		speedOrBreak = "KM/H"
 		speedOrBreakVal = round(speedOrBreakVal*3.6)
+		altOrSpeedChangeVal = altOrSpeedChangeVal * 3.6
 	end
 
     local relativePitch = 0
@@ -151,12 +154,13 @@ function self:setScreen(screen)
         relativeYaw = getRelativeYaw(velocity)
     end
 
-	if unit.getClosestPlanetInfluence() > 0 or (altitude > 0 and  altitude < 100000) then
+	if unit.getClosestPlanetInfluence() > 0.3 or (altitude ~= 0 and (altitude > -1000  and  altitude < 100000)) then
 		mode = 0
 	else
 		mode = 1
 	end
-	
+	screener:setColorMode(mode)
+
     if mode == 1 then
         pitch = relativePitch
         roll = relativeYaw
@@ -176,6 +180,11 @@ function self:setScreen(screen)
 		else
 			speedOrBreakVal = "-"
 		end
+		
+		local accLen = vec3(construct.getWorldAcceleration()):len()
+
+		altOrSpeedChangeVal = accLen
+		altOrSpeedChangeValPositiv = lastSpeed < speed
     else
         -- Pitch based on World coordinates
         pitch = 180 - getRoll(worldV, constrR, constrF)
@@ -186,17 +195,15 @@ function self:setScreen(screen)
 
         -- Roll based on World coordinates
         roll = getRoll(worldV, constrF, constrR) * -1
+		
+		altOrSpeedChangeValPositiv = altOrSpeedChangeVal > -1
     end
 	
-	if altOrSpeedChangeVal ~= 0 and altOrSpeedVal ~= 0 then
-		altOrSpeedChangeVal = round((altOrSpeedChangeVal/altOrSpeedVal) * 100)
-		if altOrSpeedChangeVal > 0 then
-			altOrSpeedChangeVal = "+ "..altOrSpeedChangeVal
-		else
-			altOrSpeedChangeVal = "- "..math.abs(altOrSpeedChangeVal)
-		end
+	if altOrSpeedChangeValPositiv then
+		altOrSpeedChangeVal = "+ " .. round(math.abs(altOrSpeedChangeVal))
+	else
+		altOrSpeedChangeVal = "- " .. round(math.abs(altOrSpeedChangeVal))
 	end
-
 
     local content = staticRender(mode)
     content = content.. [[
@@ -232,7 +239,7 @@ function self:setScreen(screen)
                         <g font-size="12">
                             <text x="785" y="534" class="chS">]].. round(pitch)..[[</text>
                             <text x="1135" y="534" class="chE">]].. round(altOrSpeedVal)..[[</text>
-							<text x="1140" y="534" class="chS">]].. altOrSpeedChangeVal..[[%</text>
+							<text x="1140" y="534" class="chS">]].. altOrSpeedChangeVal..[[</text>
                             <text x="960" y="690" class="chM">]]..round(roll)..[[</text>
                             <text x="790" y="674" class="chS">]]..""..[[</text>
 							<text x="1135" y="674" class="chE">]]..round(trottle)..[[%</text>
@@ -362,7 +369,8 @@ function self:setScreen(screen)
     if system.getArkTime() - bootTime < 2 then
         content = content .. [[<style>body { opacity: ]].. ((system.getArkTime() - bootTime) / 1.5)  ..[[ }</style>]]
     end
-
+	
+	lastSpeed = speed
     return content
 end
 
@@ -414,11 +422,13 @@ function tankStatsDefault(typeName, hp)
 end
 function tankStats(id,listName,MaxVolume,massEmpty)
 	local hasLink = false
-	
+	local multiplier = 0.8
 	for _,tank in pairs(_ENV[listName]) do
 		if tank.getLocalId() == id then
 			hasLink = true
-			MaxVolume = tank.getMaxVolume() * 4
+			if listName == "atmofueltank" then multiplier = 4 end
+			if listName == "spacefueltank" then multiplier = 6 end
+			MaxVolume = tank.getMaxVolume() * multiplier
 			massEmpty = tank.getSelfMass()
 			break
 		end
@@ -512,5 +522,8 @@ function self:register(env)
 	screener:registerDefaultScreen("mainScreenThird","Hud")
 	screener:registerDefaultScreen("mainScreenFirst","Hud")
 	screener:addView("Hud",self)
+	
+	screener:addColor(0,120)
+	screener:addColor(1,184)
 end
 return self

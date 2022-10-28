@@ -77,7 +77,7 @@ function pluginNames(name,noPrefix)
 	assert(type(name) == "string", "pluginNames: parameter name has to be string, was " .. type(name))
 
 	if noPrefix == true then
-		return name,"plainload_"..name
+		return name,name
 	end
 	 if string.find(name, packagePrefix) then
         name = string.gsub(name, packagePrefix, "")
@@ -182,10 +182,6 @@ useLightStyle = false --export: Light style reduces the interface to digital num
 
 local mode1Color = 120 --export: Base color of interface<br>Range: 0-360<br>Try 120, 184 or 334. Can be any other number in range.
 local mode2Color = 184 --export: Space color of interface<br>Range: 0-360<br>Try 120, 184 or 334. Can be any other number in range.
-
-modeColors = {}
-modeColors[0] = mode1Color
-modeColors[1] = mode2Color
 
 fuelTankHandlingSpace = 0 --export:
 fuelTankHandlingRocket = 0 --export:

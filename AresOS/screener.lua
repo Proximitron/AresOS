@@ -193,28 +193,44 @@ function screenObj(name)
     return screenDef[name]
 end
 
-local colorCache = nil
-function self:colors()
-	--local persp = self:getPerspective()
-	if colorCache == nil or colorCache.hsl ~= modeColors[mode] then
-		if modeColors[mode] == nil then
-			modeColors[mode] = 290
+local currMode = 0
+local colorRegister = {}
+function self:addColor(mode,hsl)
+	colorRegister[mode] = math.max(0, math.min(hsl,360))
+end
+function self:getColor(mode)
+	if colorRegister[mode] == nil then
+		if devMode then print("color for mode " .. mode .. " was not registered. Setting 290.") end
+		self:addColor(mode,290)
+	end
+	return colorRegister[mode]
+end
+function self:setColorMode(mode)
+	currMode = mode
+end
+local colorCache = {}
+function self:colors(mode)
+	if mode == nil then mode = currMode end
+	if colorCache[mode] == nil then
+		if colorRegister[mode] == nil then
+			if devMode then print("color for mode " .. mode .. " was not registered") end
+			self:addColor(mode,290)
 		end
-		local hsl = math.max(0, math.min(modeColors[mode],360))
-		colorCache = {
+		local hsl = self:getColor(mode)
+		colorCache[mode] = {
 			hsl=hsl,
 			sqLeftHsl=hsl + 270.0,
 			sqTwoRight=hsl + 180.0,
 			warn=5
 		}
+		local colors = colorCache[mode]
+		if colors.sqLeftHsl > 360 then colors.sqLeftHsl = colors.sqLeftHsl - 360 end
+		if colors.sqTwoRight > 360 then colors.sqTwoRight = colors.sqTwoRight - 360 end
 
-		if colorCache.sqLeftHsl > 360 then colorCache.sqLeftHsl = colorCache.sqLeftHsl - 360 end
-		if colorCache.sqTwoRight > 360 then colorCache.sqTwoRight = colorCache.sqTwoRight - 360 end
-
-		if colorCache.hsl < 45 or colorCache.hsl > 315 then colorCache.warn = colorCache.sqTwoRight end
+		if colors.hsl < 45 or colors.hsl > 315 then colors.warn = colors.sqTwoRight end
 	end
 
-	return colorCache
+	return colorCache[mode]
 end
 function drawAllScreensCss()
     local colors = self:colors()
@@ -443,6 +459,8 @@ end
 function self:register(env)
     _ENV = env
 
+	self:addColor(0,120)
+	self:setColorMode(0)
     screenDefault.totalWidth = system.getScreenWidth()
     screenDefault.totalHeight = system.getScreenHeight()
 	local globalMouseDown = false
