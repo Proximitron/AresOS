@@ -46,10 +46,11 @@ local slotClasses = {
     AntiGravityGeneratorUnit="antigrav",WarpDriveUnit="warpdrive",DataBankUnit="databases",
     ReceiverUnit = "receiver",EmitterUnit="emitter",ScreenUnit="screens",CombatDefense="transponder",
     AtmoFuelContainer = "atmofueltank",SpaceFuelContainer = "spacefueltank",RocketFuelContainer = "rocketfueltank",CounterUnit="counter",LaserDetector="laser",
-    SpaceEngine = "engine", AtmosphericVerticalBoosterLargeGroup="booster",AtmosphericVerticalBoosterMediumGroup="booster",AtmosphericVerticalBoosterSmallGroup="booster"
+    SpaceEngine = "engine", AtmosphericVerticalBoosterLargeGroup="booster",AtmosphericVerticalBoosterMediumGroup="booster",AtmosphericVerticalBoosterSmallGroup="booster",
+	TelemeterUnit = "telemeter"
 }
 local slotLists = {
-    weapon=true,databases=true,screens=true,atmofueltank=true,spacefueltank=true,rocketfueltank=true,radar=true,engine=true,hover=true,booster=true
+    weapon=true,databases=true,screens=true,atmofueltank=true,spacefueltank=true,rocketfueltank=true,radar=true,engine=true
 }
 local eventRegister = {
   core = {"onStressChanged(stress)"},

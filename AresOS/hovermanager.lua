@@ -1,53 +1,41 @@
 local self = {}
 self.version = 0.9
 
-function self:AboveGroundLevel() -- Archeageo's work
-	local function hoverDetectGround()
-		local vgroundDistance = -1
-		local hgroundDistance = -1
-		if vBooster then
-			vgroundDistance = vBooster.getDistance()
-			if vgroundDistance > -1 and vgroundDistance < 0.01 then vgroundDistance = lastvgd else lastvgd = vgroundDistance end
-		end
-		if hover then
-			hgroundDistance = hover.getDistance()
-			if hgroundDistance > -1 and hgroundDistance < 0.01 then hgroundDistance = lasthgd else lasthgd = hgroundDistance end
-		end
-		if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
-			if vgroundDistance < hgroundDistance then
-				return vgroundDistance
-			else
-				return hgroundDistance
-			end
-		elseif vgroundDistance ~= -1 then
-			return vgroundDistance
-		elseif hgroundDistance ~= -1 then
-			return hgroundDistance
-		else
-			return -1
-		end
+function self:AboveGroundLevel()
+	local lastGround = 0
+	
+	local function compileDistance(gdist)
+		if gdist == -1 then return -1
+		if gdist > -1 and gdist < 0.01 then gdist = lastGround else lastGround = gdist end
+		return gdist
 	end
-	local hovGndDet = hoverDetectGround()  
-	local groundDistance = -1
-	if antigrav and antigrav.isActive() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
-		local diffAgg = mabs(coreAltitude - antigrav.getBaseAltitude())
-		if diffAgg < 50 then return diffAgg end
-	end
-	if telemeter_1 then 
-		groundDistance = telemeter_1.raycast().distance
-		if groundDistance == 0 then groundDistance = -1 end
-	end
-	if hovGndDet ~= -1 and groundDistance ~= -1 then
-		if hovGndDet < groundDistance then 
-			return hovGndDet 
-		else
-			return groundDistance
+	local function detectGround()
+		local groundDistances = {}
+		
+		if booster ~= nil then
+			local distance = booster.getDistance()
+			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance))
 		end
-	elseif hovGndDet ~= -1 then
-		return hovGndDet
-	else
-		return groundDistance
+		if hover ~= nil then
+			local distance = hover.getDistance()
+			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance))
+		end
+		if telemeter then 
+			local distance = telemeter.raycast().distance
+			if distance == 0 then distance = -1 end
+			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance))
+		end
+		
+		local minDist = -1
+		for _,currCompare in pairs(groundDistances) do
+			if currCompare < minDist then minDist = currCompare end
+		end
+		
+		if minDist == -1 then return lastGround end
+			
+		return minDist
 	end
+	return detectGround()
 end
 function self:register(env)
     _ENV = env

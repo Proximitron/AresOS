@@ -181,6 +181,7 @@ function self:register(env)
             end
             Nav:setEngineForceCommand(autoNavigationEngineTags, autoNavigationAcceleration, dontKeepCollinearity, '', '', '', tolerancePercentToSkipOtherPriorities)
         end
+		
     end
 	self:addFlightMode("Base",NormalFlight)
 	self:setFlightMode("Base")

@@ -17,14 +17,7 @@ function split(inputstr, sep)
     end
     return t
 end
-function round(num, numDecimalPlaces)
-    local mult = 10 ^ (numDecimalPlaces or 0)
-    if numDecimalPlaces ~= nil then
-        return math.floor(num * mult + 0.5) / mult
-    else
-        return math.floor((num * mult + 0.5) / mult)
-    end
-end
+round = utils.round
 function collectKeys(t, sort)
     local _k = {}
     for k in pairs(t) do
@@ -42,11 +35,6 @@ function sortedPairs(t, sort)
             return keys[i], t[keys[i]]
         end
     end
-end
-function tableLength(T)
-    local count = 0
-    for _ in pairs(T) do count = count + 1 end
-    return count
 end
 function inTable(tab, val)
     if type(tab) ~= "table" then return false end
@@ -167,14 +155,12 @@ function getPlugin(name,noError,key,noPrefix) return plugins:getPlugin(name,noEr
 local errorStack = {}
 
 unitType = ""  --export: Set behaviour type of element
-renderEveryXFrames = 1 --export: Reduces the framerate of the interface.<br>Higher values will save more performance
+renderEveryXFrames = 3 --export: Reduces the framerate of the interface.<br>Higher values will save more performance
 executeTotal = 0
 executeSet = 0
 executeTime = 0
 executeLastFrames = 0
 screenToggle = true
-mode = -1
-forceMode = -1
 
 bootTime = system.getArkTime()
 

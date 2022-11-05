@@ -687,8 +687,8 @@ function self:register(env)
     register:addAction("unitOnStart","Screener", function()
         register:addAction("systemOnUpdate","drawAllScreens",
                 function()
-                    if databaseHasChild ~= true and screenToggle and (executeTotal == 1 or executeTotal%renderEveryXFrames==0) then
-						drawAllScreens()
+                    if (executeTotal == 1 or executeTotal%renderEveryXFrames==0) or setupMode or freeMouseMode then
+						if screenToggle then drawAllScreens() end
                         --timeit("update", drawAllScreens)
                         --local status, err = pcall(drawAllScreens)
                         --if not status then

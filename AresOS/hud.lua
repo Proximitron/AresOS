@@ -131,7 +131,7 @@ function self:setScreen(screen)
     local roll = 0
     local pitch = 0
 
-	local kmh = true
+	local kmh = false
 	local altOrSpeedChangeValPositiv = true
 	
     local rollOrYaw = "ROLL"
