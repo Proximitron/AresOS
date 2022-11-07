@@ -5,7 +5,7 @@ function self:AboveGroundLevel()
 	local lastGround = 0
 	
 	local function compileDistance(gdist)
-		if gdist == -1 then return -1
+		if gdist == -1 then return -1 end
 		if gdist > -1 and gdist < 0.01 then gdist = lastGround else lastGround = gdist end
 		return gdist
 	end
@@ -14,16 +14,16 @@ function self:AboveGroundLevel()
 		
 		if booster ~= nil then
 			local distance = booster.getDistance()
-			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance))
+			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance)) end
 		end
 		if hover ~= nil then
 			local distance = hover.getDistance()
-			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance))
+			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance)) end
 		end
 		if telemeter then 
 			local distance = telemeter.raycast().distance
 			if distance == 0 then distance = -1 end
-			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance))
+			if distance ~= -1 then table.insert(groundDistances,  compileDistance(distance)) end
 		end
 		
 		local minDist = -1
